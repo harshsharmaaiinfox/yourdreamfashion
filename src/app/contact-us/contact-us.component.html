@@ -1,0 +1,130 @@
+<div class="container">
+    <div class="contact-details">
+      <h2>Contact Us</h2>
+      <h3 class="text-center">SURAJ WELLNESS PRIVATE LIMITED</h3>
+      <!-- <div class="contact-info">
+        <h3 class="mb-2">SURAJ WELLNESS PRIVATE LIMITED</h3>
+        <p><strong>Address:</strong> Office No-1104, 11th Floor, Galaxy Diamond Plaza, Sector 4, Greater Noida West, Noida, Uttar Pradesh - 201306</p>
+        <p><strong>Mobile:</strong> <a href="tel:+918368711465">8368711465</a></p>
+        <p><b>Email:</b> <a  href="mailto:support@fashionwithtrends.com">support&#64;fashionwithtrends.com</a></p>
+        <p><strong>GST:</strong> 09ABKCS9593E1ZM</p>
+        <p><strong>Website:</strong> <a href="https://fashionwithtrends.com" target="_blank">fashionwithtrends.com</a></p>
+      </div> -->
+
+      <div _ngcontent-ng-c2326022584="" class="contact-detail">
+        <div _ngcontent-ng-c2326022584="" class="row flex-column">
+
+
+
+            <!---->
+            <div _ngcontent-ng-c2326022584="" class="col-xxl-12 col-lg-12 col-sm-12 ng-star-inserted">
+              <div _ngcontent-ng-c2326022584="" class="contact-detail-box">
+                <div _ngcontent-ng-c2326022584="" class="contact-icon ng-star-inserted">
+                  <i _ngcontent-ng-c2326022584="" class="ri-map-pin-line address-icon"></i>
+                </div>
+                <!---->
+               <div class="my-row d-flex gap-2">
+                <div _ngcontent-ng-c2326022584="" class="contact-detail-title ">
+                  <h4 _ngcontent-ng-c2326022584=""></h4>
+                </div>
+                <div _ngcontent-ng-c2326022584="" class="contact-detail-contain">
+                  <p _ngcontent-ng-c2326022584="">
+                    Office No-1104, 11th Floor, Galaxy Diamond Plaza, Sector 4, Greater Noida West,Noida, Uttar Pradesh - 201306
+                    </p>
+                </div>
+               </div>
+              </div>
+            </div>
+          <!---->
+
+
+          
+          <div _ngcontent-ng-c2326022584="" class="col-xxl-12 col-lg-12 col-sm-12 ng-star-inserted">
+            <div _ngcontent-ng-c2326022584="" class="contact-detail-box">
+              <div _ngcontent-ng-c2326022584="" class="contact-icon ng-star-inserted">
+                <i _ngcontent-ng-c2326022584="" class="ri-phone-line"></i>
+              </div>
+              <!---->
+             <div class="my-row d-flex gap-2">
+              <div _ngcontent-ng-c2326022584="" class="contact-detail-title">
+                <h4 _ngcontent-ng-c2326022584=""></h4></div>
+                <div _ngcontent-ng-c2326022584="" class="contact-detail-contain"
+                ><p _ngcontent-ng-c2326022584="">+91 8368711465
+                </p>
+              </div>
+             </div>
+            </div>
+          </div>
+          <!---->
+          <div _ngcontent-ng-c2326022584="" class="col-xxl-12 col-lg-12 col-sm-12 ng-star-inserted">
+            <div _ngcontent-ng-c2326022584="" class="contact-detail-box">
+              <div _ngcontent-ng-c2326022584="" class="contact-icon ng-star-inserted">
+                <i _ngcontent-ng-c2326022584="" class="ri-mail-line"></i>
+              </div>
+              <!---->
+             <div class="my-row d-flex gap-2">
+              <div _ngcontent-ng-c2326022584="" class="contact-detail-title">
+                <h4 _ngcontent-ng-c2326022584=""></h4>
+              </div>
+              <div _ngcontent-ng-c2326022584="" class="contact-detail-contain">
+                <p _ngcontent-ng-c2326022584="">support&#64;fashionwithtrends.com</p>
+              </div>
+             </div>
+            </div>
+          </div>
+          <!---->
+          <div _ngcontent-ng-c2326022584="" class="col-xxl-12 col-lg-12 col-sm-12 ng-star-inserted">
+            <div _ngcontent-ng-c2326022584="" class="contact-detail-box">
+              <div _ngcontent-ng-c2326022584="" class="contact-icon ng-star-inserted">
+                <i _ngcontent-ng-c2326022584="" class="ri-file-text-line"></i>
+              </div>
+              <!---->
+            <div class="my-row d-flex gap-2">
+              <div _ngcontent-ng-c2326022584="" class="contact-detail-title">
+                <h4 _ngcontent-ng-c2326022584=""></h4>
+              </div>
+              <div _ngcontent-ng-c2326022584="" class="contact-detail-contain">
+                <p _ngcontent-ng-c2326022584="">09ABKCS9593E1ZM</p>
+              </div>
+            </div>
+            </div>
+          </div>
+        
+        </div>
+      </div>
+    </div>
+  
+    <div class="contact-form">
+      <h2>Get in Touch</h2>
+      <form [formGroup]="contactForm" (ngSubmit)="onSubmit()">
+  
+        <label for="name">Name</label>
+        <input type="text" id="name" formControlName="name">
+        <div *ngIf="contactForm.get('name')?.invalid && contactForm.get('name')?.touched" class="error">
+          Name should contain only letters and spaces.
+        </div>
+      
+        <label for="email">Email</label>
+        <input type="email" id="email" formControlName="email">
+        <div *ngIf="contactForm.get('email')?.invalid && contactForm.get('email')?.touched" class="error">
+          Enter a valid email address.
+        </div>
+      
+        <label for="phone">Phone</label>
+        <input type="tel" id="phone" formControlName="phone">
+        <div *ngIf="contactForm.get('phone')?.invalid && contactForm.get('phone')?.touched" class="error">
+          Phone number should be exactly 10 digits.
+        </div>
+      
+        <label for="message">Message</label>
+        <textarea id="message" formControlName="message" rows="4"></textarea>
+        <div *ngIf="contactForm.get('message')?.invalid && contactForm.get('message')?.touched" class="error">
+          Message field cannot be empty.
+        </div>
+      
+        <button type="submit" [disabled]="contactForm.invalid" class="sub-btn">Submit</button>
+      </form>
+      
+    </div>
+  </div>
+  
