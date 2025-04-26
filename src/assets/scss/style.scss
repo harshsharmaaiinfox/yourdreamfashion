@@ -754,7 +754,7 @@ footer.footer-section-2.footer-color-3, footer .footer-section-2.footer-color-3 
 }
 .subscribe-form {
   display: flex;
- 
+  width: 80%;
 }
 
 .subscribe-form input[type="email"] {
@@ -793,7 +793,7 @@ footer .main-footer .footer-contact ul li::before {
   border-bottom:none;
 }
 .sub-footer.section-small-space {
-  justify-content: start;
+  justify-content: end;
 }
 .banner-home{
   cursor: pointer;
@@ -817,4 +817,14 @@ footer .main-footer .footer-contact ul li::before {
       justify-content: center !important; /* Center items */
       align-items: center; /* Center items horizontally */
   }
+}
+
+.category-section-2 .category-slider .shop-category-box a.circle-1::before {
+  background-color: transparent !important;
+}
+.shop-category-box img {
+  border-radius: 50%;
+  width: 130px !important;
+  height: 130px !important;
+  border: 1px solid #22352d;
 }

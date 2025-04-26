@@ -53,6 +53,19 @@ export class CategoriesComponent {
     }
   }
 
+
+  // Custom image mapping for categories in the Rome theme
+  customCategoryImages: { [key: string]: string } = {
+    'men': '../assets/images/cat-image-men.png',
+    'activewear': '../assets/images/cat-image-sports.png',
+    'sunglasses': '../assets/images/cat-image-sunglasses.png',
+    'fashion': '../assets/images/cat-image-collection.png',
+    'women': '../assets/images/cat-image-women.png',
+  };
+
+
+
+
   selectCategory(id?: number) {
     this.selectedCategory.emit(id);
   }
