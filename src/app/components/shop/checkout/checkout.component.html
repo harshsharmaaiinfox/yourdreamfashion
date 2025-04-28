@@ -2,8 +2,8 @@
 
 <section class="checkout-section-2 section-b-space" id="mySubPaisa">
     <div class="container-fluid-lg">
-        <div class="row g-sm-4 g-3">
-            <div class="col-xxl-8 col-xl-7">
+       
+            <div class="col-xxl-12 col-xl-7">
                 <div class="left-sidebar-checkout">
                     <div class="checkout-form-section" *ngIf="(setting$ | async)?.activation?.guest_checkout && !(accessToken$ | async)">
                         <div class="checkbox-main-box">
@@ -284,11 +284,11 @@
                         </div>
                     </div>
                     <div class="checkout-detail-box" *ngIf="(accessToken$ | async)">
-                        <ul>
+                        <ul class="custom-ul">
                             <li *ngIf="!(cartDigital$ | async)">
-                                <div class="checkout-icon">
+                                <!-- <div class="checkout-icon">
                                     <i class="ri-map-pin-line"></i>
-                                </div>
+                                </div> -->
                                 <div class="checkout-box">
                                     <div class="checkout-title">
                                         <h4>{{ 'Shipping Address' | translate }}</h4>
@@ -307,9 +307,9 @@
                                 </div>
                             </li>
                             <li>
-                                <div class="checkout-icon">
+                                <!-- <div class="checkout-icon">
                                     <i class="ri-map-pin-line"></i>
-                                </div>
+                                </div> -->
                                 <div class="checkout-box">
                                     <div href="javascript:void(0)" class="checkout-title">
                                         <h4>{{ 'Billing_address' | translate }}</h4>
@@ -327,10 +327,13 @@
                                     </div>
                                 </div>
                             </li>
+                        </ul>
+
+                        <ul class="mt-5">
                             <li *ngIf="!(cartDigital$ | async)">
-                                <div class="checkout-icon">
+                                <!-- <div class="checkout-icon">
                                     <i class="ri-truck-line"></i>
-                                </div>
+                                </div> -->
                                 <div class="checkout-box">
                                     <div class="checkout-title">
                                         <h4>{{ 'Delivery Options' | translate }}</h4>
@@ -345,9 +348,9 @@
                                 </div>
                             </li>
                             <li>
-                                <div class="checkout-icon">
+                                <!-- <div class="checkout-icon">
                                     <i class="ri-bank-card-line"></i>
-                                </div>
+                                </div> -->
                                 <div class="checkout-box">
                                     <div class="checkout-title">
                                         <h4>{{ 'Payment Options' | translate }}</h4>
@@ -366,7 +369,8 @@
                     </div>
                 </div>
             </div>
-            <div class="col-xxl-4 col-xl-5">
+         
+            <div class="col-xxl-12 col-xl-7 mt-4">
                 <div class="card pos-detail-card">
                     <div class="card-body">
                         <div class="title-header">
@@ -374,6 +378,8 @@
                                 <h5>{{ 'Checkout' | translate }}</h5>
                             </div>
                         </div>
+                       <div class="row last-col-check d-flex gap-3">
+                       <div class="col-lg-6">
                         <div class="product-details">
                             <app-no-data
                                 [class]="'empty-cart'"
@@ -400,6 +406,8 @@
                                 </li>
                             </ul>
                         </div>
+                       </div>
+                      <div class="col-lg-5">
                         <ng-container *ngIf="(cartItem$ | async)?.length">
                             <form [formGroup]="form" (ngSubmit)="placeorder()">
                                 <div class="custom-box-loader">
@@ -499,10 +507,11 @@
                                 </div>
                             </form>
                         </ng-container>
+                      </div>
+                       </div>
                     </div>
                 </div>
             </div>
-        </div>
     </div>
 </section>
 <address-modal #addressModal></address-modal>
