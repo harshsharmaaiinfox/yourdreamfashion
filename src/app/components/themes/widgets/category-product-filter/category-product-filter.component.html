@@ -1,14 +1,14 @@
 <app-title
     [title]="data?.categories_products?.title"
-    [class]="'container-fluid-lg'"
+    [class]="'container-fluid-lg product-flow'"
     [style]="'simple'">
-    <app-theme-categories
+    <!-- <app-theme-categories
     *ngIf="data?.categories_products?.category_ids?.length"
     [categoryIds]="data?.categories_products?.category_ids || []"
     [style]="'filter'"
     [selectedCategoryId]="selectedCategoryId"
     (selectedCategory)="selectCategory($event)">
-    </app-theme-categories>
+    </app-theme-categories> -->
 </app-title>
 
 <div class="container-fluid-lg">
