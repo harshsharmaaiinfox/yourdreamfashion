@@ -830,3 +830,23 @@ footer .main-footer .footer-contact ul li::before {
 .category-name h6, .category-name .h6 {
    display: block !important; 
 }
+@media(min-width:980px) and (max-width:1200px){
+  .subscribe-form {
+    flex-direction: column;
+    width: 100%;
+}
+.subscribe-form button {
+  margin-left: 0px;
+  margin-top: 10px !important;
+}
+}
+@media(max-width:420px){
+  .subscribe-form {
+    flex-direction: column;
+    width: 100%;
+}
+.subscribe-form button {
+  margin-left: 0px;
+  margin-top: 10px !important;
+}
+}
