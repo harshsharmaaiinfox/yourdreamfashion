@@ -64,7 +64,19 @@ export class CategoriesComponent {
   };
 
 
+// Custom name mapping for categories
+customCategoryNames: { [key: string]: string } = {
+  'men': 'Men\'s Fashion',
+  'activewear': 'Sports & Activewear',
+  'sunglasses': 'Designer Sunglasses',
+  'fashion': 'Trendy Collections',
+  'women': 'Women\'s Fashion',
+};
 
+// Method to get category name (custom or default)
+getCategoryName(slug: string, defaultName: string): string {
+  return this.customCategoryNames[slug] || defaultName;
+}
 
   selectCategory(id?: number) {
     this.selectedCategory.emit(id);

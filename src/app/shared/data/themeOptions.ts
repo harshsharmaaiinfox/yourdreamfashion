@@ -254,39 +254,39 @@ export const themeOptionsYourDreamFashion = {
                 "text": null
             }
         },
-        "about_us": {
-            "about": {
-                "status": true,
-                "content_left_image_url": "/storage/3284/fashion-collection-design-shopping-graphic-words.jpg",
-                "content_right_image_url": "/storage/3285/customers-checking-out-shop.jpg",
-                "sub_title": "Fashion With Trends - Elevate Your Fashion Game",
-                "title": "Trendy, Timeless, and Tailored for You",
-                "description": "Welcome to Fashion With Trends, your ultimate destination for fashion that speaks your style. Whether you're looking for the latest trends, classic elegance, or personalized fashion inspiration, we've got you covered. Discover handpicked collections, premium quality fabrics, and effortlessly chic outfits tailored to your personality. Shop with confidence and redefine your wardrobe with Fashion With Trends – where fashion meets innovation!",
-                "futures": []
-            },
-            "clients": {
-                "status": true,
-                "sub_title": "Real Reviews, Genuine Experiences, Unmatched Style",
-                "title": "What Our Clients Say About gajlaxmi",
-                "content": []
-            },
-            "team": {
-                "status": true,
-                "sub_title": null,
-                "title": null,
-                "members": []
-            },
-            "testimonial": {
-                "status": true,
-                "sub_title": "Real Stories, Real Style – Hear from Our Happy Customers",
-                "title": "What Our Clients Say",
-                "reviews": []
-            },
-            "blog": {
-                "status": false,
-                "blog_ids": []
-            }
-        },
+        // "about_us": {
+        //     "about": {
+        //         "status": true,
+        //         "content_left_image_url": "/storage/3284/fashion-collection-design-shopping-graphic-words.jpg",
+        //         "content_right_image_url": "/storage/3285/customers-checking-out-shop.jpg",
+        //         "sub_title": "Fashion With Trends - Elevate Your Fashion Game",
+        //         "title": "Trendy, Timeless, and Tailored for You",
+        //         "description": "Welcome to Fashion With Trends, your ultimate destination for fashion that speaks your style. Whether you're looking for the latest trends, classic elegance, or personalized fashion inspiration, we've got you covered. Discover handpicked collections, premium quality fabrics, and effortlessly chic outfits tailored to your personality. Shop with confidence and redefine your wardrobe with Fashion With Trends – where fashion meets innovation!",
+        //         "futures": []
+        //     },
+        //     "clients": {
+        //         "status": true,
+        //         "sub_title": "Real Reviews, Genuine Experiences, Unmatched Style",
+        //         "title": "What Our Clients Say About gajlaxmi",
+        //         "content": []
+        //     },
+        //     "team": {
+        //         "status": true,
+        //         "sub_title": null,
+        //         "title": null,
+        //         "members": []
+        //     },
+        //     "testimonial": {
+        //         "status": true,
+        //         "sub_title": "Real Stories, Real Style – Hear from Our Happy Customers",
+        //         "title": "What Our Clients Say",
+        //         "reviews": []
+        //     },
+        //     "blog": {
+        //         "status": false,
+        //         "blog_ids": []
+        //     }
+        // },
         "error_page": {
             "error_page_content": null,
             "back_button_enable": true,

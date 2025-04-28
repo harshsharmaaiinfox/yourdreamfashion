@@ -28,7 +28,8 @@ const routes: Routes = [
       }
     ],
     canActivate: [ScrollPositionGuard],
-  }
+  },
+  { path: 'privacy-policy', loadChildren: () => import('./about-us/about-us.module').then(m => m.AboutUsModule) }
 ];
 
 @NgModule({

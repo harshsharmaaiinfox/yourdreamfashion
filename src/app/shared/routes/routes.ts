@@ -46,6 +46,11 @@ export const content: Routes = [
     },
 
     {
+        path: "aboutus",
+        loadChildren: () => import("../../about-us/about-us.module").then((m) => m.AboutUsModule)
+    },
+
+    {
         path: "Contact-Us",
         loadChildren: () => import("../../contact-us/contact-us.module").then((m) => m.ContactUsModule)
     },
