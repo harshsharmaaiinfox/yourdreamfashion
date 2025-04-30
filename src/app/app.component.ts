@@ -106,6 +106,8 @@ export class AppComponent {
     });
   }
 
+
+  
   loadScript(val: Analytics): void {
     if(val.google_analytics.status){
       const script = document.createElement('script');
