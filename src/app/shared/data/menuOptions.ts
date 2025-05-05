@@ -30,7 +30,7 @@ export const ThemeMenuOptions: any[] = [
     // },
     {
         "id": 162,
-        "title": "Men Fashion",
+        "title": "Men's Style",
         "sort": null,
         "link_type": "link",
         "mega_menu": 0,
@@ -55,7 +55,7 @@ export const ThemeMenuOptions: any[] = [
     },
     {
         "id": 163,
-        "title": "Women Fashion",
+        "title": "Women's Style",
         "sort": null,
         "link_type": "link",
         "mega_menu": 0,
@@ -81,7 +81,7 @@ export const ThemeMenuOptions: any[] = [
    
     {
         "id": 45,
-        "title": "Sports Fashion",
+        "title": "Sport Style",
         "sort": null,
         "link_type": "link",
         "mega_menu": 1,
@@ -106,7 +106,7 @@ export const ThemeMenuOptions: any[] = [
     },
     {
         "id": 67,
-        "title": "Sunglasses",
+        "title": "EyeWear",
         "sort": null,
         "link_type": "link",
         "mega_menu": 0,
@@ -139,7 +139,7 @@ export const ThemeMenuOptions: any[] = [
     },
     {
         "id": 42,
-        "title": "Collections",
+        "title": "Top Picks",
         "sort": null,
         "link_type": "link",
         "mega_menu": 1,

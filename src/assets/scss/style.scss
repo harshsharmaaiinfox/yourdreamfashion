@@ -969,3 +969,11 @@ ul.custom-ul li {
   border: none;
   color: #fff !important;
 }
+@media(min-width:768px) and (max-width:1200px){
+  header .top-nav .navbar-top {
+    margin-top: 10px;
+}
+header .navbar-toggler-icon {
+  margin-left: 10px;
+}
+}

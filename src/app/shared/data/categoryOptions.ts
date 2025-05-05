@@ -4,7 +4,7 @@ export const ThemeCategoryOptions = {
 
     {
         "id": 66,
-        "name": "Men Fashion",
+        "name": "Men's Style",
         "slug": "men",
         "meta_title": null,
         "meta_description": null,
@@ -49,7 +49,7 @@ export const ThemeCategoryOptions = {
     },
     {
         "id": 68,
-        "name": "Women Fashion",
+        "name": "Women's Style",
         "slug": "women",
         "meta_title": null,
         "meta_description": null,
@@ -95,7 +95,7 @@ export const ThemeCategoryOptions = {
 
       {
           "id": 60,
-          "name": "Sports Fashion",
+          "name": "Sport Style",
           "slug": "activewear",
           "meta_title": null,
           "meta_description": null,
@@ -187,7 +187,7 @@ export const ThemeCategoryOptions = {
      
       {
           "id": 67,
-          "name": "Sunglasses",
+          "name": "EyeWear",
           "slug": "sunglasses",
           "meta_title": null,
           "meta_description": null,
@@ -232,7 +232,7 @@ export const ThemeCategoryOptions = {
       },
       {
         "id": 59,
-        "name": "Collections",
+        "name": "Top Picks",
         "slug": "fashion",
         "meta_title": null,
         "meta_description": null,

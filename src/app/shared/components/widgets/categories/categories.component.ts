@@ -66,11 +66,11 @@ export class CategoriesComponent {
 
 // Custom name mapping for categories
 customCategoryNames: { [key: string]: string } = {
-  'men': 'Men\'s Fashion',
-  'activewear': 'Sports & Activewear',
-  'sunglasses': 'Designer Sunglasses',
-  'fashion': 'Trendy Collections',
-  'women': 'Women\'s Fashion',
+  'men': 'Men\'s Style',
+  'activewear': 'Sport Style',
+  'sunglasses': 'Eyewear',
+  'fashion': 'Top Picks',
+  'women': 'Women\'s Style',
 };
 
 // Method to get category name (custom or default)
