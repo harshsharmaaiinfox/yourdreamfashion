@@ -45,7 +45,6 @@
   .dashboard-left-sidebar {
     background: $light-gray;
     box-shadow: 0 0 8px rgba($title-color, 0.14);
-    border-radius: 10px;
     overflow: hidden;
     position: sticky;
     top: 107px;
@@ -430,7 +429,6 @@
   .dashboard-right-sidebar {
     background-color: $light-gray;
     padding: calc(20px + (30 - 20) * ((100vw - 320px) / (1920 - 320)));
-    border-radius: 8px;
     height: 100%;
 
     .right-option {

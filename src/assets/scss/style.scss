@@ -776,7 +776,6 @@ footer.footer-section-2.footer-color-3, footer .footer-section-2.footer-color-3 
   cursor: pointer;
   text-transform: uppercase;
   border-radius: 3px;
-  margin-left: 10px;
   transition: background 0.3s ease;
 }
 
@@ -976,4 +975,16 @@ ul.custom-ul li {
 header .navbar-toggler-icon {
   margin-left: 10px;
 }
+}
+.user-dashboard-section .dashboard-left-sidebar {
+  
+    overflow: hidden !important;
+}
+.user-dashboard-section .dashboard-left-sidebar .user-nav-pills .nav-item .nav-link.active::before, .user-dashboard-section .dashboard-left-sidebar .user-nav-pills .nav-item .nav-link .show > .nav-link::before {
+    width: 100%;
+    border-top-right-radius: 30px !important;
+    border-bottom-right-radius: 30px !important;
+}
+.user-dashboard-section .row {
+    flex-direction: row-reverse;
 }

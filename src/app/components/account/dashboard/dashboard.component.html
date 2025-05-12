@@ -2,16 +2,14 @@
     <div class="dashboard-home">
         <div class="title-header">
             <div class="d-flex align-items-center">
-                <h5>{{ 'My Dashboard' | translate }}</h5>
+                <h5>{{ 'Dashboard' | translate }}</h5>
             </div>
         </div>
         <div class="dashboard-user-name">
             <h6 class="text-content">{{ 'Hello' | translate }}, <b class="text-title">{{ (user$ | async)?.name! | titleCase }}</b></h6>
-            <p class="text-content">
-                {{ "Welcome" | translate}}
-            </p>
+         
         </div>
-        <div class="total-box">
+        <!-- <div class="total-box">
             <div class="row row-cols-xxl-3 g-sm-4 g-3">
                 <div>
                     <div class="totle-contain">
@@ -51,8 +49,8 @@
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="profile-about dashboard-bg-box">
+        </div> -->
+        <div class="profile-about dashboard-bg-box mt-5">
             <div class="row">
                 <div class="col-xxl-7">
                     <div class="dashboard-title mb-3">

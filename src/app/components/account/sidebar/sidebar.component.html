@@ -5,7 +5,7 @@
 </div>
 <div class="profile-box">
     <div class="cover-image">
-        <img src="assets/images/inner-page/cover-img.jpg" class="img-fluid" alt="cover-img">
+        <img src="assets/images/profile-back.png" class="img-fluid" alt="cover-img">
     </div>
     <div class="profile-contain">
         <div class="profile-image">
@@ -52,7 +52,7 @@
             <i class="ri-bank-line me-2"></i> {{ 'Bank Details' | translate }}
         </a>
     </li>
-    <li class="nav-item" role="presentation">
+    <!-- <li class="nav-item" role="presentation">
         <a class="nav-link" [routerLinkActive]="['active']" [routerLink]="['/account/wallet']" (click)="openMenu(false)">
             <i class="ri-wallet-line me-2"></i> {{ 'My Wallet' | translate }}
         </a>
@@ -61,7 +61,7 @@
         <a class="nav-link" [routerLinkActive]="['active']" [routerLink]="['/account/point']" (click)="openMenu(false)">
             <i class="ri-coin-line me-2"></i> {{ 'Earning Points' | translate }}
         </a>
-    </li>
+    </li> -->
     <li class="nav-item" role="presentation">
         <a class="nav-link" [routerLinkActive]="['active']" [routerLink]="['/account/order']" (click)="openMenu(false)">
             <i class="ri-file-text-line me-2"></i>{{ 'My Orders' | translate }}
@@ -84,7 +84,7 @@
     </li>
     <li class="nav-item logout-cls" role="presentation">
         <a href="javascript:void(0)" class="btn" (click)="confirmationModal.openModal()">
-            <i class="ri-logout-box-r-line me-2"></i> {{ 'Logout' | translate }}
+           {{ 'Logout' | translate }}
         </a>
     </li>
 </ul>
