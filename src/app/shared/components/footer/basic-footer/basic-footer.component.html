@@ -63,26 +63,21 @@
                 <div class="input-group">
                     <input type="email" formControlName="email" placeholder="Enter Email Address" 
                         [class.is-invalid]="submitted && emailControl?.errors">
-                    <button type="submit" >
-                        <span >Subscribe</span>
+                    <button type="submit">
+                        <span>Subscribe</span>
                     </button>
                 </div>
                 
                 <!-- Form validation errors -->
-                <div *ngIf="submitted && emailControl?.errors" class="error-message">
+                <div *ngIf="(submitted && emailControl?.errors)" class="error-message mt-2" style="color: red;">
                     <span *ngIf="emailControl?.errors?.['required']">Email address is required</span>
-                    <span *ngIf="emailControl?.errors?.['email'] && !emailControl?.errors?.['invalidGmail']">Please enter a valid email address</span>
-                    <span *ngIf="emailControl?.errors?.['invalidGmail']">Only Gmail addresses are accepted</span>
+                    <span *ngIf="emailControl?.errors?.['pattern'] && !emailControl?.errors?.['invalidDomain']">Please enter a valid email address format</span>
+                    <span *ngIf="emailControl?.errors?.['invalidDomain']">Please use a valid email provider like Gmail, Yahoo, Outlook, etc.</span>
                 </div>
                 
                 <!-- Success message -->
-                <div *ngIf="subscribeSuccess" class="success-message">
+                <div *ngIf="subscribeSuccess" class="success-message mt-2" style="color: green;">
                     <span>Thank you for subscribing! You'll receive updates soon.</span>
-                </div>
-                
-                <!-- General error message -->
-                <div *ngIf="subscribeError && !emailControl?.errors" class="error-message">
-                    <span>{{ subscribeError }}</span>
                 </div>
             </form>
         </div>
