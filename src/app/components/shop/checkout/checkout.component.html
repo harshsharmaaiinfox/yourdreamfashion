@@ -414,7 +414,7 @@
                        </div>
                       <div class="col-lg-5">
                         <ng-container *ngIf="(cartItem$ | async)?.length">
-                            <form [formGroup]="form" (ngSubmit)="placeorder()">
+                            <form [formGroup]="form" (ngSubmit)="placeorder($event)" #checkoutForm="ngForm">
                                 <div class="custom-box-loader">
                                     <ul class="summary-total">
                                         <li>
@@ -500,12 +500,17 @@
                                             </h4>
                                         </li>
                                     </ul>
-                                    <app-button
-                                        [class]="'btn theme-bg-color text-white btn-md w-100 mt-4 fw-bold my-order'"
-                                        [id]="'place_order'"
-                                        [disabled]="form.valid && checkoutTotal ? false : true">
+                                    <button
+                                        type="submit"
+                                        class="btn theme-bg-color text-white btn-md w-100 mt-4 fw-bold my-order"
+                                        id="place_order"
+                                        [disabled]="!(form.valid && checkoutTotal)"
+                                        (click)="placeorder($event)"
+                                        (touchstart)="handleTouchStart($event)"
+                                        (touchend)="handleTouchEnd($event)"
+                                        style="-webkit-appearance: none; touch-action: manipulation; -webkit-tap-highlight-color: transparent;">
                                         {{ 'Place Order' | translate }}
-                                    </app-button>
+                                    </button>
                                 </div>
                             </form>
                         </ng-container>

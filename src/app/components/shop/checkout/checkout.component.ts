@@ -90,6 +90,9 @@ export class CheckoutComponent {
   // };
   // reactRoot: any = null;
 
+  private touchStartTime: number = 0;
+  private readonly TOUCH_DURATION_THRESHOLD = 200; // milliseconds
+
   constructor(
     private store: Store, private router: Router,
     private formBuilder: FormBuilder, public cartService: CartService,
@@ -1093,6 +1096,27 @@ export class CheckoutComponent {
       });
     } else {
       const invalidFields = Object?.keys(this.form?.controls).filter(key => this.form.controls[key].invalid);
+    }
+  }
+
+  handleTouchStart(event: TouchEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.touchStartTime = Date.now();
+  }
+
+  handleTouchEnd(event: TouchEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const touchDuration = Date.now() - this.touchStartTime;
+    
+    // Only trigger if the touch was short (not a long press)
+    if (touchDuration < this.TOUCH_DURATION_THRESHOLD) {
+      // Add a small delay to ensure Safari processes the touch event properly
+      setTimeout(() => {
+        this.placeorder(event);
+      }, 50);
     }
   }
 
