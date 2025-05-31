@@ -90,9 +90,6 @@ export class CheckoutComponent {
   // };
   // reactRoot: any = null;
 
-  private touchStartTime: number = 0;
-  private readonly TOUCH_DURATION_THRESHOLD = 200; // milliseconds
-
   constructor(
     private store: Store, private router: Router,
     private formBuilder: FormBuilder, public cartService: CartService,
@@ -259,33 +256,6 @@ export class CheckoutComponent {
   ngOnInit() {
     this.checkout$.subscribe(data => this.checkoutTotal = data);
     this.products();
-
-    // Check if we're returning from a payment
-    const paymentUuid = sessionStorage.getItem('payment_uuid');
-    const paymentMethod = sessionStorage.getItem('payment_method');
-    const paymentAction = sessionStorage.getItem('payment_action');
-
-    if (paymentUuid && paymentMethod && paymentAction) {
-        // Clear the stored data
-        sessionStorage.removeItem('payment_uuid');
-        sessionStorage.removeItem('payment_method');
-        sessionStorage.removeItem('payment_action');
-
-        // Check payment status
-        this.cartService.checkTransectionStatusCashFree(paymentUuid, paymentMethod).subscribe({
-            next: (response) => {
-                if (response?.R === true || response?.R === false) {
-                    this.router.navigate(['order/checkout-success'], { 
-                        queryParams: { order_status: response.R }
-                    });
-                }
-            },
-            error: (err) => {
-                console.error('Error checking payment status:', err);
-                this.notificationService.showError('Error checking payment status');
-            }
-        });
-    }
   }
 
   products() {
@@ -351,111 +321,72 @@ export class CheckoutComponent {
     const uuid = uuidv4();
     const userData = localStorage.getItem('account');
     const payload = {
-        uuid,
-        ...JSON.parse(userData || '').user,
-        checkout: this.storeData?.order?.checkout
+      // ...this.form.value,
+      uuid,
+      // ...JSON.parse(userData || ''),
+      ...JSON.parse(userData || '').user,
+      checkout: this.storeData?.order?.checkout
+      // ...JSON.parse(userData || '').user.address[0]
     }
-
-    this.cartService.initiateSubPaisa({
-        uuid: payload.uuid,
+    // console.log('Store Data', this.storeData)
+    this.cartService.initiateSubPaisa(
+      { 
+        uuid: payload.uuid, 
         email: payload.email,
         total: this.storeData?.order?.checkout?.total?.total,
         phone: JSON.parse(userData || '').user.phone,
         name: JSON.parse(userData || '').user.name,
         address: JSON.parse(userData || '').user.address[0].city + ' ' + JSON.parse(userData || '').user.address[0].area
-    }).subscribe({
-        next: (data) => {
-            if (data) {
-                this.formData = this.sanitizer.bypassSecurityTrustHtml(data?.data);
-                const container = document.getElementById('paymentContainer');
-            
-                if (container) {
-                    container.innerHTML = data.data;
-                    const form = container.querySelector('form') as HTMLFormElement;
-                
-                    // For Safari on iOS, submit the form directly
-                    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-                    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-                    
-                    if (isSafari && isIOS) {
-                        // Store payment info
-                        sessionStorage.setItem('payment_uuid', uuid);
-                        sessionStorage.setItem('payment_method', payment_method);
-                        sessionStorage.setItem('payment_action', JSON.stringify(action));
-                        // Submit form
-                        form.submit();
-                    } else {
-                        // For other browsers, use popup window
-                        setTimeout(() => {
-                            const paymentWindow = this.openPaymentWindow('');
-                            if (paymentWindow) {
-                                paymentWindow.document.write(`
-                                    <html>
-                                        <head>
-                                            <title>Payment</title>
-                                        </head>
-                                        <body>
-                                            ${form.outerHTML}
-                                            <script>
-                                                document.getElementById('submitButton').click();
-                                            </script>
-                                        </body>
-                                    </html>
-                                `);
-                                paymentWindow.document.close();
-                                this.startPollingForPaymentStatus(uuid, action, paymentWindow, payment_method);
-                            }
-                        }, 1000);
-                    }
-                }
-            }
-        },
-        error: (err) => {
-            console.log(err);
-            this.notificationService.showError("Error initiating payment");
+      }
+    ).subscribe({
+      next: (data) => {
+        if (data) {
+          this.formData = this.sanitizer.bypassSecurityTrustHtml(data?.data);
+          const container = document.getElementById('paymentContainer');
+        
+          if (container) {
+            container.innerHTML = data.data;
+            const form = container.querySelector('form') as HTMLFormElement;
+        
+            setTimeout(() => {
+              // ✅ Open a popup window (instead of a new tab)
+              const paymentWindow = window.open(
+                '', 
+                'PaymentWindow', 
+                'width=600,height=700,left=100,top=100,resizable=yes,scrollbars=yes'
+              );
+        
+              if (paymentWindow) {
+                paymentWindow.document.write(`
+                  <html>
+                    <head>
+                      <title>Payment</title>
+                    </head>
+                    <body>
+                      ${form.outerHTML}
+                      <script>
+                        document.getElementById('submitButton').click();
+                      </script>
+                    </body>
+                  </html>
+                `);
+                paymentWindow.document.close(); // Ensure the document is fully loaded
+        
+                // ✅ Start polling for payment status
+                this.startPollingForPaymentStatus(uuid, action, paymentWindow, payment_method);
+              } else {
+                console.error("Popup blocked. Please allow pop-ups for this site.");
+              }
+            }, 1000);
+          }
         }
-    });
+      },
+      error: (err) => {
+        console.log(err);
+      }
+    }); // Call Sub Paisa API
   }
-
-  private openPaymentWindow(url: string): Window | null {
-    // Detect Safari on iOS
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-    
-    if (isSafari && isIOS) {
-        // For Safari on iOS, open in the same window
-        window.location.href = url;
-        return null;
-    } else if (isSafari) {
-        // For desktop Safari, try to open in a new window with specific features
-        const features = [
-            'width=600',
-            'height=700',
-            'left=' + (window.screen.width - 600) / 2,
-            'top=' + (window.screen.height - 700) / 2,
-            'resizable=yes',
-            'scrollbars=yes',
-            'status=yes',
-            'location=yes',
-            'menubar=no',
-            'toolbar=no'
-        ].join(',');
-        
-        const newWindow = window.open(url, 'PaymentWindow', features);
-        
-        // If popup is blocked, open in same window
-        if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-            window.location.href = url;
-            return null;
-        }
-        
-        return newWindow;
-    } else {
-        // For other browsers, use standard window.open
-        return window.open(url, 'PaymentWindow', 'width=600,height=700,left=100,top=100,resizable=yes,scrollbars=yes');
-    }
-  }
-
+  
   startPollingForPaymentStatus(uuid: any, action: any, paymentWindow: Window | null, payment_method: string) {
     if (!paymentWindow) return;
 
@@ -662,20 +593,15 @@ export class CheckoutComponent {
             const cashFreeData = response.data;
             
             if (cashFreeData?.payment_link) {
-              // Try to open in a new window first
-              const paymentWindow = this.openPaymentWindow(cashFreeData.payment_link);
-              
+              // Open the payment page in a new tab/window
+              const paymentWindow = window.open(
+                cashFreeData.payment_link, 
+                'PaymentWindow', 
+                'width=600,height=700,left=100,top=100,resizable=yes,scrollbars=yes'
+              );
+
               if (!paymentWindow) {
-                // If popup is blocked, try to open in the same window
-                this.notificationService.showSuccess('Please allow popups for this site or click here to continue payment');
-                // Create a button to open payment in same window
-                const continueButton = document.createElement('button');
-                continueButton.innerHTML = 'Continue Payment';
-                continueButton.className = 'btn btn-primary mt-3';
-                continueButton.onclick = () => {
-                  window.location.href = cashFreeData.payment_link;
-                };
-                document.querySelector('.custom-box-loader')?.appendChild(continueButton);
+                console.error("Popup blocked. Please allow pop-ups for this site.");
               } else {
                 // Start polling for payment status
                 let action = new PlaceOrder(this.form.value);
@@ -683,33 +609,22 @@ export class CheckoutComponent {
               }
             } else {
               console.error("Invalid response: Payment link is missing.");
-              this.notificationService.showError("Payment link is missing");
             }
           } catch (error) {
             console.error("Error parsing CashFree response:", error);
-            this.notificationService.showError("Error processing payment");
           }
         } else {
           console.error("Payment initiation failed:", response?.msg);
-          this.notificationService.showError(response?.msg || "Payment initiation failed");
         }
       },
       error: (err) => {
         console.log("Error initiating payment:", err);
-        this.notificationService.showError("Error initiating payment");
       }
     });
   }
 
   checkTransactionStatusCashFree(uuid: any, action: any, paymentWindow: Window | null, payment_method: string) {
-    // If paymentWindow is null, it means we're using same window navigation
-    if (!paymentWindow) {
-        // Store payment info in session storage for when we return
-        sessionStorage.setItem('payment_uuid', uuid);
-        sessionStorage.setItem('payment_method', payment_method);
-        sessionStorage.setItem('payment_action', JSON.stringify(action));
-        return;
-    }
+    if (!paymentWindow) return;
 
     let windowClosedManually = false;
 
@@ -1181,95 +1096,80 @@ export class CheckoutComponent {
     }
   }
 
-  handleTouchStart(event: TouchEvent) {
-    event.preventDefault();
-    event.stopPropagation();
-    this.touchStartTime = Date.now();
-  }
-
-  handleTouchEnd(event: TouchEvent) {
-    event.preventDefault();
-    event.stopPropagation();
-    
-    const touchDuration = Date.now() - this.touchStartTime;
-    
-    // Only trigger if the touch was short (not a long press)
-    if (touchDuration < this.TOUCH_DURATION_THRESHOLD) {
-      // Add a small delay to ensure Safari processes the touch event properly
-      setTimeout(() => {
-        this.placeorder(event);
-      }, 50);
-    }
-  }
-
   placeorder(event?: Event) {
+    console.log('Place order clicked, current loading state:', this.loading);
+    
     if (event) {
-      event.preventDefault();
-      event.stopPropagation();
+        event.preventDefault();
+        event.stopPropagation();
     }
 
     // Prevent double submission
     if (this.loading) {
-      return;
+        console.log('Already loading, preventing double submission');
+        return;
     }
 
     if (this.form.valid) {
-      this.loading = true;
-      
-      if (this.cpnRef && !this.cpnRef.nativeElement.value) {
-        this.form.controls['coupon'].reset();
-      }
-
-      const uuid = uuidv4();
-      const formData = {
-        ...this.form.value,
-        uuid: uuid
-      };
-
-      let action = new PlaceOrder(formData);
-
-      try {
-        if (this.payment_method === 'cash_free') {
-          this.initiateCashFreePaymentIntent(this.payment_method);
-        } else if (this.payment_method === 'sub_paisa') {
-          this.initiateSubPaisa(formData, this.payment_method);
-        } else if (this.payment_method === 'neoKred') {
-          this.initiateNeoKredPaymentIntent();
-        } else if (this.payment_method === 'zyaada_pay') {
-          this.initiateZyaadaPayPaymentIntent(this.payment_method);
-        } else if (this.payment_method === 'gaonvashi_cashfree') {
-          this.initiateGaonvashiCashFreePaymentIntent(this.payment_method);
-        } else if (this.payment_method === 'fashionwithtrends_neokred') {
-          this.orderService.placeOrder(action?.payload).pipe(
-            tap({
-              next: result => {
-                console.log(result);
-              },
-              error: err => {
-                this.loading = false;
-                throw new Error(err?.error?.message);
-              }
-            })
-          ).subscribe({
-            next: (result) => {
-              this.initiateFashionWithTrendsNeoCredIntent(this.payment_method, uuid, result);
-            },
-            error: (err) => {
-              this.loading = false;
-              console.log(err);
-            }
-          });
+        console.log('Form is valid, setting loading to true');
+        this.loading = true;
+        
+        if (this.cpnRef && !this.cpnRef.nativeElement.value) {
+            this.form.controls['coupon'].reset();
         }
-      } catch (error) {
-        this.loading = false;
-        console.error('Error in placeorder:', error);
-      }
+
+        const uuid = uuidv4();
+        const formData = {
+            ...this.form.value,
+            uuid: uuid
+        };
+
+        let action = new PlaceOrder(formData);
+
+        try {
+            if (this.payment_method === 'cash_free') {
+                this.initiateCashFreePaymentIntent(this.payment_method);
+            } else if (this.payment_method === 'sub_paisa') {
+                this.initiateSubPaisa(formData, this.payment_method);
+            } else if (this.payment_method === 'neoKred') {
+                this.initiateNeoKredPaymentIntent();
+            } else if (this.payment_method === 'zyaada_pay') {
+                this.initiateZyaadaPayPaymentIntent(this.payment_method);
+            } else if (this.payment_method === 'gaonvashi_cashfree') {
+                this.initiateGaonvashiCashFreePaymentIntent(this.payment_method);
+            } else if (this.payment_method === 'fashionwithtrends_neokred') {
+                this.orderService.placeOrder(action?.payload).pipe(
+                    tap({
+                        next: result => {
+                            console.log('Order placed successfully:', result);
+                        },
+                        error: err => {
+                            console.error('Error placing order:', err);
+                            this.loading = false;
+                            throw new Error(err?.error?.message);
+                        }
+                    })
+                ).subscribe({
+                    next: (result) => {
+                        this.initiateFashionWithTrendsNeoCredIntent(this.payment_method, uuid, result);
+                    },
+                    error: (err) => {
+                        console.error('Error in subscription:', err);
+                        this.loading = false;
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error in placeorder:', error);
+            this.loading = false;
+        }
     } else {
-      // Mark all fields as touched to show validation errors
-      Object.keys(this.form.controls).forEach(key => {
-        const control = this.form.get(key);
-        control?.markAsTouched();
-      });
+        console.log('Form is invalid');
+        // Mark all fields as touched to show validation errors
+        Object.keys(this.form.controls).forEach(key => {
+            const control = this.form.get(key);
+            control?.markAsTouched();
+        });
     }
   }
 
@@ -1283,7 +1183,7 @@ export class CheckoutComponent {
   }
 
   ngOnDestroy() {
-    // this.store.dispatch(new Clear());
+    this.loading = false;
     this.store.dispatch(new ClearCart());
     this.form.reset();
     this.pollingSubscription && this.pollingSubscription.unsubscribe();
