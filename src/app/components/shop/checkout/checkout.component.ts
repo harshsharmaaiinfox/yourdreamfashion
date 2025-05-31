@@ -324,24 +324,19 @@ export class CheckoutComponent {
     const uuid = uuidv4();
     const userData = localStorage.getItem('account');
     const payload = {
-      // ...this.form.value,
       uuid,
-      // ...JSON.parse(userData || ''),
       ...JSON.parse(userData || '').user,
       checkout: this.storeData?.order?.checkout
-      // ...JSON.parse(userData || '').user.address[0]
     }
-    // console.log('Store Data', this.storeData)
-    this.cartService.initiateSubPaisa(
-      { 
-        uuid: payload.uuid, 
-        email: payload.email,
-        total: this.storeData?.order?.checkout?.total?.total,
-        phone: JSON.parse(userData || '').user.phone,
-        name: JSON.parse(userData || '').user.name,
-        address: JSON.parse(userData || '').user.address[0].city + ' ' + JSON.parse(userData || '').user.address[0].area
-      }
-    ).subscribe({
+
+    this.cartService.initiateSubPaisa({
+      uuid: payload.uuid, 
+      email: payload.email,
+      total: this.storeData?.order?.checkout?.total?.total,
+      phone: JSON.parse(userData || '').user.phone,
+      name: JSON.parse(userData || '').user.name,
+      address: JSON.parse(userData || '').user.address[0].city + ' ' + JSON.parse(userData || '').user.address[0].area
+    }).subscribe({
       next: (data) => {
         if (data) {
           this.formData = this.sanitizer.bypassSecurityTrustHtml(data?.data);
@@ -352,14 +347,19 @@ export class CheckoutComponent {
             const form = container.querySelector('form') as HTMLFormElement;
         
             setTimeout(() => {
-              // ✅ Open a popup window (instead of a new tab)
-              const paymentWindow = window.open(
-                '', 
-                'PaymentWindow', 
-                'width=600,height=700,left=100,top=100,resizable=yes,scrollbars=yes'
-              );
-        
-              if (paymentWindow) {
+              const paymentWindow = this.openPaymentWindow('');
+              
+              if (!paymentWindow) {
+                // If popup is blocked, show a message and provide a button to continue
+                this.notificationService.showSuccess('Please allow popups for this site or click here to continue payment');
+                const continueButton = document.createElement('button');
+                continueButton.innerHTML = 'Continue Payment';
+                continueButton.className = 'btn btn-primary mt-3';
+                continueButton.onclick = () => {
+                  form.submit();
+                };
+                document.querySelector('.custom-box-loader')?.appendChild(continueButton);
+              } else {
                 paymentWindow.document.write(`
                   <html>
                     <head>
@@ -373,12 +373,10 @@ export class CheckoutComponent {
                     </body>
                   </html>
                 `);
-                paymentWindow.document.close(); // Ensure the document is fully loaded
-        
-                // ✅ Start polling for payment status
+                paymentWindow.document.close();
+                
+                // Start polling for payment status
                 this.startPollingForPaymentStatus(uuid, action, paymentWindow, payment_method);
-              } else {
-                console.error("Popup blocked. Please allow pop-ups for this site.");
               }
             }, 1000);
           }
@@ -386,10 +384,45 @@ export class CheckoutComponent {
       },
       error: (err) => {
         console.log(err);
+        this.notificationService.showError("Error initiating payment");
       }
-    }); // Call Sub Paisa API
+    });
   }
-  
+
+  // Add a new method to handle window opening
+  private openPaymentWindow(url: string): Window | null {
+    // Try to detect Safari
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    
+    if (isSafari) {
+        // For Safari, try to open in a new window with specific features
+        const features = [
+            'width=600',
+            'height=700',
+            'left=' + (window.screen.width - 600) / 2,
+            'top=' + (window.screen.height - 700) / 2,
+            'resizable=yes',
+            'scrollbars=yes',
+            'status=yes',
+            'location=yes',
+            'menubar=no',
+            'toolbar=no'
+        ].join(',');
+        
+        const newWindow = window.open(url, 'PaymentWindow', features);
+        
+        // If popup is blocked, return null
+        if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+            return null;
+        }
+        
+        return newWindow;
+    } else {
+        // For other browsers, use standard window.open
+        return window.open(url, 'PaymentWindow', 'width=600,height=700,left=100,top=100,resizable=yes,scrollbars=yes');
+    }
+  }
+
   startPollingForPaymentStatus(uuid: any, action: any, paymentWindow: Window | null, payment_method: string) {
     if (!paymentWindow) return;
 
@@ -596,15 +629,20 @@ export class CheckoutComponent {
             const cashFreeData = response.data;
             
             if (cashFreeData?.payment_link) {
-              // Open the payment page in a new tab/window
-              const paymentWindow = window.open(
-                cashFreeData.payment_link, 
-                'PaymentWindow', 
-                'width=600,height=700,left=100,top=100,resizable=yes,scrollbars=yes'
-              );
-
+              // Try to open in a new window first
+              const paymentWindow = this.openPaymentWindow(cashFreeData.payment_link);
+              
               if (!paymentWindow) {
-                console.error("Popup blocked. Please allow pop-ups for this site.");
+                // If popup is blocked, try to open in the same window
+                this.notificationService.showSuccess('Please allow popups for this site or click here to continue payment');
+                // Create a button to open payment in same window
+                const continueButton = document.createElement('button');
+                continueButton.innerHTML = 'Continue Payment';
+                continueButton.className = 'btn btn-primary mt-3';
+                continueButton.onclick = () => {
+                  window.location.href = cashFreeData.payment_link;
+                };
+                document.querySelector('.custom-box-loader')?.appendChild(continueButton);
               } else {
                 // Start polling for payment status
                 let action = new PlaceOrder(this.form.value);
@@ -612,16 +650,20 @@ export class CheckoutComponent {
               }
             } else {
               console.error("Invalid response: Payment link is missing.");
+              this.notificationService.showError("Payment link is missing");
             }
           } catch (error) {
             console.error("Error parsing CashFree response:", error);
+            this.notificationService.showError("Error processing payment");
           }
         } else {
           console.error("Payment initiation failed:", response?.msg);
+          this.notificationService.showError(response?.msg || "Payment initiation failed");
         }
       },
       error: (err) => {
         console.log("Error initiating payment:", err);
+        this.notificationService.showError("Error initiating payment");
       }
     });
   }
