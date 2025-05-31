@@ -32,6 +32,23 @@ import { NotificationService } from '../../../shared/services/notification.servi
 // import { PaymentInitModal } from 'pg-test-project';
 // import * as React from 'react';
 
+interface PaymentResponse {
+  R: boolean;
+  data: {
+    payment_url?: string;
+    action?: string;
+    inputs?: { [key: string]: string };
+  };
+  msg?: string;
+}
+
+interface PaymentError {
+  error?: {
+    message: string;
+  };
+  message?: string;
+}
+
 @Component({
   selector: 'app-checkout',
   templateUrl: './checkout.component.html',
@@ -317,18 +334,13 @@ export class CheckoutComponent {
     }
   }
 
-  initiateSubPaisa(action: any, payment_method: string) {
-    const uuid = uuidv4();
+  initiateSubPaisa(payment_method: string, uuid: any, order_result: any) {
     const userData = localStorage.getItem('account');
     const payload = {
-      // ...this.form.value,
       uuid,
-      // ...JSON.parse(userData || ''),
       ...JSON.parse(userData || '').user,
       checkout: this.storeData?.order?.checkout
-      // ...JSON.parse(userData || '').user.address[0]
     }
-    // console.log('Store Data', this.storeData)
     this.cartService.initiateSubPaisa(
       { 
         uuid: payload.uuid, 
@@ -341,52 +353,40 @@ export class CheckoutComponent {
     ).subscribe({
       next: (data) => {
         if (data) {
-          this.formData = this.sanitizer.bypassSecurityTrustHtml(data?.data);
-          const container = document.getElementById('paymentContainer');
-        
-          if (container) {
-            container.innerHTML = data.data;
-            const form = container.querySelector('form') as HTMLFormElement;
-        
-            setTimeout(() => {
-              // ✅ Open a popup window (instead of a new tab)
-              const paymentWindow = window.open(
-                '', 
-                'PaymentWindow', 
-                'width=600,height=700,left=100,top=100,resizable=yes,scrollbars=yes'
-              );
-        
-              if (paymentWindow) {
-                paymentWindow.document.write(`
-                  <html>
-                    <head>
-                      <title>Payment</title>
-                    </head>
-                    <body>
-                      ${form.outerHTML}
-                      <script>
-                        document.getElementById('submitButton').click();
-                      </script>
-                    </body>
-                  </html>
-                `);
-                paymentWindow.document.close(); // Ensure the document is fully loaded
-        
-                // ✅ Start polling for payment status
-                this.startPollingForPaymentStatus(uuid, action, paymentWindow, payment_method);
-              } else {
-                console.error("Popup blocked. Please allow pop-ups for this site.");
-              }
-            }, 1000);
+          // Store payment info in session storage
+          sessionStorage.setItem('payment_uuid', uuid);
+          sessionStorage.setItem('payment_method', payment_method);
+          sessionStorage.setItem('payment_action', JSON.stringify(this.form.value));
+          localStorage.setItem('order_id', JSON.stringify(order_result.order_number));
+
+          // Create a temporary form and submit it
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = data.data.action || data.data;
+          form.target = '_self';
+          
+          // Add any required form fields from data.data
+          if (data.data.inputs) {
+            Object.keys(data.data.inputs).forEach(key => {
+              const input = document.createElement('input');
+              input.type = 'hidden';
+              input.name = key;
+              input.value = data.data.inputs[key];
+              form.appendChild(input);
+            });
           }
+          
+          document.body.appendChild(form);
+          form.submit();
+          document.body.removeChild(form);
         }
       },
       error: (err) => {
         console.log(err);
       }
-    }); // Call Sub Paisa API
+    });
   }
-  
+
   startPollingForPaymentStatus(uuid: any, action: any, paymentWindow: Window | null, payment_method: string) {
     if (!paymentWindow) return;
 
@@ -504,24 +504,52 @@ export class CheckoutComponent {
 
   // NeoKred
 
-  initiateNeoKredPaymentIntent() { // https://apidocument-cb.netlify.app/#intent-generation
-    this.cartService.initiateNeoKredIntent(
-      { 
-        uuid: 'payload.uuid', 
-        email: 'payload.email',
-        amount: "1",
-        remark: "test",
-        refId: "NKTEST"
-      }
-    ).subscribe({
-      next: (data) => {
-        console.log(data);
-        this.openNeoKredModal(data);
+  initiateNeoKredPaymentIntent(payment_method: string, uuid: any, order_result: any) {
+    const userData = localStorage.getItem('account');
+    const parsedUserData = JSON.parse(userData || '{}')?.user || {};
+
+    const payload = {
+      uuid,
+      ...parsedUserData,
+      checkout: this.storeData?.order?.checkout
+    };
+
+    this.cartService.initiateNeoKredIntent({
+      uuid: payload.uuid,
+      email: payload.email,
+      total: this.storeData?.order?.checkout?.total?.total,
+      phone: parsedUserData.phone,
+      name: parsedUserData.name,
+      address: `${parsedUserData.address?.[0]?.city || ''} ${parsedUserData.address?.[0]?.area || ''}`
+    }).subscribe({
+      next: (response) => {
+        if (response?.R && response?.data) {
+          try {
+            const neoKredData = response.data;
+            
+            if (neoKredData?.payment_url) {
+              // Store payment info in session storage
+              sessionStorage.setItem('payment_uuid', uuid);
+              sessionStorage.setItem('payment_method', payment_method);
+              sessionStorage.setItem('payment_action', JSON.stringify(this.form.value));
+              localStorage.setItem('order_id', JSON.stringify(order_result.order_number));
+              
+              // Use window.location.href for Safari compatibility
+              window.location.href = neoKredData.payment_url;
+            } else {
+              console.error("Invalid response: Payment link is missing.");
+            }
+          } catch (error) {
+            console.error("Error parsing NeoKred response:", error);
+          }
+        } else {
+          console.error("Payment initiation failed:", response?.msg);
+        }
       },
       error: (err) => {
-        console.log(err);
+        console.log("Error initiating payment:", err);
       }
-    }); // https://apidocument-cb.netlify.app/#intent-generation
+    });
   }
 
   checkTransectionStatusNeoKred() { // https://apidocument-cb.netlify.app/#transaction-status
@@ -568,8 +596,7 @@ export class CheckoutComponent {
   }
 
   // CashFree Payment Integration
-  initiateCashFreePaymentIntent(payment_method: string) {
-    const uuid = uuidv4();
+  initiateCashFreePaymentIntent(payment_method: string, uuid: any, order_result: any) {
     const userData = localStorage.getItem('account');
     const parsedUserData = JSON.parse(userData || '{}')?.user || {};
 
@@ -593,20 +620,14 @@ export class CheckoutComponent {
             const cashFreeData = response.data;
             
             if (cashFreeData?.payment_link) {
-              // Open the payment page in a new tab/window
-              const paymentWindow = window.open(
-                cashFreeData.payment_link, 
-                'PaymentWindow', 
-                'width=600,height=700,left=100,top=100,resizable=yes,scrollbars=yes'
-              );
-
-              if (!paymentWindow) {
-                console.error("Popup blocked. Please allow pop-ups for this site.");
-              } else {
-                // Start polling for payment status
-                let action = new PlaceOrder(this.form.value);
-                this.checkTransactionStatusCashFree(uuid, action.payload, paymentWindow, payment_method);
-              }
+              // Store payment info in session storage
+              sessionStorage.setItem('payment_uuid', uuid);
+              sessionStorage.setItem('payment_method', payment_method);
+              sessionStorage.setItem('payment_action', JSON.stringify(this.form.value));
+              localStorage.setItem('order_id', JSON.stringify(order_result.order_number));
+              
+              // Use window.location.href for Safari compatibility
+              window.location.href = cashFreeData.payment_link;
             } else {
               console.error("Invalid response: Payment link is missing.");
             }
@@ -623,277 +644,7 @@ export class CheckoutComponent {
     });
   }
 
-  checkTransactionStatusCashFree(uuid: any, action: any, paymentWindow: Window | null, payment_method: string) {
-    if (!paymentWindow) return;
-
-    let windowClosedManually = false;
-
-    // ✅ Start monitoring the payment window's URL and check if it's closed
-    const urlCheckInterval = setInterval(() => {
-        try {
-            if (paymentWindow.closed) {
-                console.log("Payment window closed manually or due to an issue.");
-                clearInterval(urlCheckInterval);
-                windowClosedManually = true;
-
-                // ✅ If closed manually, inform the frontend
-                this.handlePaymentSuccess({ status: false, reason: "Window closed manually" }, action, uuid, payment_method);
-                return;
-            }
-
-            const currentUrl = paymentWindow.location.href;
-            console.log("Current Payment Window URL:", currentUrl);
-
-            // ✅ Check if redirected to success or failure page
-            if (currentUrl.includes("success") || currentUrl.includes("failure")) {
-                console.log("Redirect detected, closing window.");
-                clearInterval(urlCheckInterval);
-                paymentWindow.close();
-
-                // ✅ Process the response
-                this.handlePaymentSuccess({ status: true, url: currentUrl }, action, uuid, payment_method);
-            }
-        } catch (error) {
-            // Catches CORS-related issues if the domain changes
-            console.warn("Unable to access payment window URL (possible CORS issue).");
-        }
-    }, 1000); // Check every second
-
-    // ✅ Continue polling for payment status
-    this.pollingSubscription = interval(this.pollingInterval)
-      .pipe(
-          switchMap(() => this.cartService.checkTransectionStatusCashFree(uuid, payment_method)),
-          map(response => ({
-              ...response,
-              status: response.status || false
-          })),
-          delay(9999999999999), // Wait before forcing status update
-          map(response => ({
-              ...response,
-              status: true // Force status to true after 60s if still false
-          })),
-          takeWhile((response: { status: boolean }) => !response.status, true)
-      )
-      .subscribe({
-          next: (response) => {
-              console.log('Payment Status:', response);
-
-              if (response.status) {
-                  this.pollingSubscription.unsubscribe(); // Stop polling
-
-                  // ✅ Close the popup window if still open
-                  if (paymentWindow && !paymentWindow.closed) {
-                      paymentWindow.close();
-                      console.log("Payment popup closed automatically.");
-                  }
-
-                  this.handlePaymentSuccess(response, action, uuid, payment_method);
-              }
-          },
-          error: (err) => {
-              console.error('Error checking payment status:', err);
-          },
-          complete: () => {
-              if (windowClosedManually) {
-                  console.log("Polling stopped: Payment window was closed manually.");
-              }
-          }
-      });
-  }
-
-  // Zyaada Pay Payment Integration
-  initiateZyaadaPayPaymentIntent(payment_method: string) {
-    const uuid = uuidv4();
-    const userData = localStorage.getItem('account');
-    const parsedUserData = JSON.parse(userData || '{}')?.user || {};
-
-    const payload = {
-      uuid,
-      ...parsedUserData,
-      checkout: this.storeData?.order?.checkout
-    };
-
-    this.cartService.initiateZyaadaPayIntent({
-      uuid: payload.uuid,
-      email: payload.email,
-      total: this.storeData?.order?.checkout?.total?.total,
-      phone: parsedUserData.phone,
-      name: parsedUserData.name,
-      address: `${parsedUserData.address?.[0]?.city || ''} ${parsedUserData.address?.[0]?.area || ''}`
-    }).subscribe({
-      next: (response) => {
-        if (response?.R && response?.data) {
-          try {
-            const zyaadaPayData = response.data;
-
-            console.log(zyaadaPayData);
-            
-            if (zyaadaPayData?.payment_url) {
-              // Open the payment page in a new tab/window
-              const paymentWindow = window.open(
-                zyaadaPayData.payment_url, 
-                'PaymentWindow', 
-                'width=600,height=700,left=100,top=100,resizable=yes,scrollbars=yes'
-              );
-
-              if (!paymentWindow) {
-                console.error("Popup blocked. Please allow pop-ups for this site.");
-              } else {
-                // Start polling for payment status
-                let action = new PlaceOrder(this.form.value);
-                this.checkTransactionStatusZyaadaPay(uuid, action.payload, paymentWindow, payment_method);
-              }
-            } else {
-              console.error("Invalid response: Payment link is missing.");
-            }
-          } catch (error) {
-              console.error("Error parsing Zyaada Pay response:", error);
-          }
-        } else {
-          console.error("Payment initiation failed:", response?.msg);
-        }
-      },
-      error: (err) => {
-        console.log("Error initiating payment:", err);
-      }
-    });
-  }
-
-  checkTransactionStatusZyaadaPay(uuid: any, action: any, paymentWindow: Window | null, payment_method: string) {
-    if (!paymentWindow) return;
-
-    let windowClosedManually = false;
-
-    // ✅ Start monitoring the payment window's URL and check if it's closed
-    const urlCheckInterval = setInterval(() => {
-        try {
-            if (paymentWindow.closed) {
-                console.log("Payment window closed manually or due to an issue.");
-                clearInterval(urlCheckInterval);
-                windowClosedManually = true;
-
-                // ✅ If closed manually, inform the frontend
-                this.handlePaymentSuccess({ status: false, reason: "Window closed manually" }, action, uuid, payment_method);
-                return;
-            }
-
-            const currentUrl = paymentWindow.location.href;
-            console.log("Current Payment Window URL:", currentUrl);
-
-            // ✅ Check if redirected to success or failure page
-            if (currentUrl.includes("success") || currentUrl.includes("failure")) {
-                console.log("Redirect detected, closing window.");
-                clearInterval(urlCheckInterval);
-                paymentWindow.close();
-
-                // ✅ Process the response
-                this.handlePaymentSuccess({ status: true, url: currentUrl }, action, uuid, payment_method);
-            }
-        } catch (error) {
-            // Catches CORS-related issues if the domain changes
-            console.warn("Unable to access payment window URL (possible CORS issue).");
-        }
-    }, 1000); // Check every second
-
-    // ✅ Continue polling for payment status
-    this.pollingSubscription = interval(this.pollingInterval)
-      .pipe(
-          switchMap(() => this.cartService.checkTransectionStatusZyaadaPay(uuid, payment_method)),
-          map(response => ({
-              ...response,
-              status: response.status || false
-          })),
-          delay(9999999999999), // Wait before forcing status update
-          map(response => ({
-              ...response,
-              status: true // Force status to true after 60s if still false
-          })),
-          takeWhile((response: { status: boolean }) => !response.status, true)
-      )
-      .subscribe({
-          next: (response) => {
-              console.log('Payment Status:', response);
-
-              if (response.status) {
-                  this.pollingSubscription.unsubscribe(); // Stop polling
-
-                  // ✅ Close the popup window if still open
-                  if (paymentWindow && !paymentWindow.closed) {
-                      paymentWindow.close();
-                      console.log("Payment popup closed automatically.");
-                  }
-
-                  this.handlePaymentSuccess(response, action, uuid, payment_method);
-              }
-          },
-          error: (err) => {
-              console.error('Error checking payment status:', err);
-          },
-          complete: () => {
-              if (windowClosedManually) {
-                  console.log("Polling stopped: Payment window was closed manually.");
-              }
-          }
-      });
-  }
-
-  // Gaonvashi CashFree Payment Integration
-  initiateGaonvashiCashFreePaymentIntent(payment_method: string) {
-    const uuid = uuidv4();
-    const userData = localStorage.getItem('account');
-    const parsedUserData = JSON.parse(userData || '{}')?.user || {};
-
-    const payload = {
-      uuid,
-      ...parsedUserData,
-      checkout: this.storeData?.order?.checkout
-    };
-
-    this.cartService.initiateGaonvashiCashFreePaymentIntent({
-      uuid: payload.uuid,
-      email: payload.email,
-      total: this.storeData?.order?.checkout?.total?.total,
-      phone: parsedUserData.phone,
-      name: parsedUserData.name,
-      address: `${parsedUserData.address?.[0]?.city || ''} ${parsedUserData.address?.[0]?.area || ''}`
-    }).subscribe({
-      next: (response) => {
-        if (response?.R && response?.data) {
-          try {
-            const zyaadaPayData = response.data;
-
-            if (zyaadaPayData?.payment_url) {
-              // Open the payment page in a new tab/window
-              const paymentWindow = window.open(
-                zyaadaPayData.payment_url, 
-                'PaymentWindow', 
-                'width=600,height=700,left=100,top=100,resizable=yes,scrollbars=yes'
-              );
-
-              if (!paymentWindow) {
-                console.error("Popup blocked. Please allow pop-ups for this site.");
-              } else {
-                // Start polling for payment status
-                let action = new PlaceOrder(this.form.value);
-                this.checkTransactionStatusZyaadaPay(uuid, action.payload, paymentWindow, payment_method);
-              }
-            } else {
-              console.error("Invalid response: Payment link is missing.");
-            }
-          } catch (error) {
-              console.error("Error parsing Zyaada Pay response:", error);
-          }
-        } else {
-          console.error("Payment initiation failed:", response?.msg);
-        }
-      },
-      error: (err) => {
-        console.log("Error initiating payment:", err);
-      }
-    });
-  }
-
-  async checkTransectionStatusCashFree(uuid: any,payment_method: string) {
+  checkTransactionStatusCashFree(uuid: any,payment_method: string) {
     this.cartService.checkTransectionStatusCashFree(uuid, payment_method).subscribe({
       next:(data) => {
         console.log(data);
@@ -1096,80 +847,65 @@ export class CheckoutComponent {
     }
   }
 
-  placeorder(event?: Event) {
-    console.log('Place order clicked, current loading state:', this.loading);
-    
-    if (event) {
-        event.preventDefault();
-        event.stopPropagation();
-    }
+  placeorder() {
+    if(this.form.valid) {
+      if(this.cpnRef && !this.cpnRef.nativeElement.value) {
+        this.form.controls['coupon'].reset();
+      }
 
-    // Prevent double submission
-    if (this.loading) {
-        console.log('Already loading, preventing double submission');
-        return;
-    }
+      const uuid = uuidv4();
 
-    if (this.form.valid) {
-        console.log('Form is valid, setting loading to true');
-        this.loading = true;
-        
-        if (this.cpnRef && !this.cpnRef.nativeElement.value) {
-            this.form.controls['coupon'].reset();
+      const formData = {
+        ...this.form.value,
+        uuid: uuid
+      }
+
+      let action = new PlaceOrder(formData);
+
+      this.orderService.placeOrder(action?.payload).pipe(
+        tap({
+          next: result => {
+            console.log(result);
+          },
+          error: err => {
+            throw new Error(err?.error?.message);
+          }
+        })
+      ).subscribe({
+        next: (result) => {
+          if(this.payment_method === 'cash_free'){
+            this.initiateCashFreePaymentIntent(this.payment_method, uuid, result);
+          }
+          if(this.payment_method === 'sub_paisa'){
+            this.initiateSubPaisa(this.payment_method, uuid, result);
+          }
+          if(this.payment_method === 'neoKred') {
+            this.initiateNeoKredPaymentIntent(this.payment_method, uuid, result);
+          }
+          if(this.payment_method === 'zyaada_pay') {
+            this.initiateZyaadaPayPaymentIntent(this.payment_method, uuid, result);
+          }
+          if(this.payment_method === 'ease_buzz') {
+            this.initiateEaseBuzzPaymentIntent(this.payment_method, uuid, result);
+          }
+          if(this.payment_method === 'neoKred2') {
+            this.initiateNeoKred2PaymentIntent(this.payment_method, uuid, result);
+          }
+          if(this.payment_method === 'gaonvashi_cashfree') {
+            this.initiateGaonvashiCashFreePaymentIntent(this.payment_method, uuid, result);
+          }
+        },
+        error: (err) => {
+          console.log(err);
+          this.loading = false;
         }
-
-        const uuid = uuidv4();
-        const formData = {
-            ...this.form.value,
-            uuid: uuid
-        };
-
-        let action = new PlaceOrder(formData);
-
-        try {
-            if (this.payment_method === 'cash_free') {
-                this.initiateCashFreePaymentIntent(this.payment_method);
-            } else if (this.payment_method === 'sub_paisa') {
-                this.initiateSubPaisa(formData, this.payment_method);
-            } else if (this.payment_method === 'neoKred') {
-                this.initiateNeoKredPaymentIntent();
-            } else if (this.payment_method === 'zyaada_pay') {
-                this.initiateZyaadaPayPaymentIntent(this.payment_method);
-            } else if (this.payment_method === 'gaonvashi_cashfree') {
-                this.initiateGaonvashiCashFreePaymentIntent(this.payment_method);
-            } else if (this.payment_method === 'fashionwithtrends_neokred') {
-                this.orderService.placeOrder(action?.payload).pipe(
-                    tap({
-                        next: result => {
-                            console.log('Order placed successfully:', result);
-                        },
-                        error: err => {
-                            console.error('Error placing order:', err);
-                            this.loading = false;
-                            throw new Error(err?.error?.message);
-                        }
-                    })
-                ).subscribe({
-                    next: (result) => {
-                        this.initiateFashionWithTrendsNeoCredIntent(this.payment_method, uuid, result);
-                    },
-                    error: (err) => {
-                        console.error('Error in subscription:', err);
-                        this.loading = false;
-                    }
-                });
-            }
-        } catch (error) {
-            console.error('Error in placeorder:', error);
-            this.loading = false;
-        }
+      });
     } else {
-        console.log('Form is invalid');
-        // Mark all fields as touched to show validation errors
-        Object.keys(this.form.controls).forEach(key => {
-            const control = this.form.get(key);
-            control?.markAsTouched();
-        });
+      // Mark all fields as touched to show validation errors
+      Object.keys(this.form.controls).forEach(key => {
+        const control = this.form.get(key);
+        control?.markAsTouched();
+      });
     }
   }
 
@@ -1187,6 +923,204 @@ export class CheckoutComponent {
     this.store.dispatch(new ClearCart());
     this.form.reset();
     this.pollingSubscription && this.pollingSubscription.unsubscribe();
+  }
+
+  // Zyaada Pay Payment Integration
+  initiateZyaadaPayPaymentIntent(payment_method: string, uuid: any, order_result: any) {
+    const userData = localStorage.getItem('account');
+    const parsedUserData = JSON.parse(userData || '{}')?.user || {};
+
+    const payload = {
+      uuid,
+      ...parsedUserData,
+      checkout: this.storeData?.order?.checkout
+    };
+
+    this.cartService.initiateZyaadaPayIntent({
+      uuid: payload.uuid,
+      email: payload.email,
+      total: this.storeData?.order?.checkout?.total?.total,
+      phone: parsedUserData.phone,
+      name: parsedUserData.name,
+      address: `${parsedUserData.address?.[0]?.city || ''} ${parsedUserData.address?.[0]?.area || ''}`
+    }).subscribe({
+      next: (response) => {
+        if (response?.R && response?.data) {
+          try {
+            const zyaadaPayData = response.data;
+            
+            if (zyaadaPayData?.payment_url) {
+              // Store payment info in session storage
+              sessionStorage.setItem('payment_uuid', uuid);
+              sessionStorage.setItem('payment_method', payment_method);
+              sessionStorage.setItem('payment_action', JSON.stringify(this.form.value));
+              localStorage.setItem('order_id', JSON.stringify(order_result.order_number));
+              
+              // Use window.location.href for Safari compatibility
+              window.location.href = zyaadaPayData.payment_url;
+            } else {
+              console.error("Invalid response: Payment link is missing.");
+            }
+          } catch (error) {
+            console.error("Error parsing Zyaada Pay response:", error);
+          }
+        } else {
+          console.error("Payment initiation failed:", response?.msg);
+        }
+      },
+      error: (err) => {
+        console.log("Error initiating payment:", err);
+      }
+    });
+  }
+
+  // Gaonvashi CashFree Payment Integration
+  initiateGaonvashiCashFreePaymentIntent(payment_method: string, uuid: any, order_result: any) {
+    const userData = localStorage.getItem('account');
+    const parsedUserData = JSON.parse(userData || '{}')?.user || {};
+
+    const payload = {
+      uuid,
+      ...parsedUserData,
+      checkout: this.storeData?.order?.checkout
+    };
+
+    this.cartService.initiateGaonvashiCashFreePaymentIntent({
+      uuid: payload.uuid,
+      email: payload.email,
+      total: this.storeData?.order?.checkout?.total?.total,
+      phone: parsedUserData.phone,
+      name: parsedUserData.name,
+      address: `${parsedUserData.address?.[0]?.city || ''} ${parsedUserData.address?.[0]?.area || ''}`
+    }).subscribe({
+      next: (response) => {
+        if (response?.R && response?.data) {
+          try {
+            const cashFreeData = response.data;
+            
+            if (cashFreeData?.payment_url) {
+              // Store payment info in session storage
+              sessionStorage.setItem('payment_uuid', uuid);
+              sessionStorage.setItem('payment_method', payment_method);
+              sessionStorage.setItem('payment_action', JSON.stringify(this.form.value));
+              localStorage.setItem('order_id', JSON.stringify(order_result.order_number));
+              
+              // Use window.location.href for Safari compatibility
+              window.location.href = cashFreeData.payment_url;
+            } else {
+              console.error("Invalid response: Payment link is missing.");
+            }
+          } catch (error) {
+            console.error("Error parsing Gaonvashi CashFree response:", error);
+          }
+        } else {
+          console.error("Payment initiation failed:", response?.msg);
+        }
+      },
+      error: (err) => {
+        console.log("Error initiating payment:", err);
+      }
+    });
+  }
+
+  // EaseBuzz Payment Integration
+  initiateEaseBuzzPaymentIntent(payment_method: string, uuid: any, order_result: any) {
+    const userData = localStorage.getItem('account');
+    const parsedUserData = JSON.parse(userData || '{}')?.user || {};
+
+    const payload = {
+      uuid,
+      ...parsedUserData,
+      checkout: this.storeData?.order?.checkout
+    };
+
+    // Use initiateCashFreeIntent as a fallback since EaseBuzz is not implemented
+    this.cartService.initiateCashFreeIntent({
+      uuid: payload.uuid,
+      email: payload.email,
+      total: this.storeData?.order?.checkout?.total?.total,
+      phone: parsedUserData.phone,
+      name: parsedUserData.name,
+      address: `${parsedUserData.address?.[0]?.city || ''} ${parsedUserData.address?.[0]?.area || ''}`
+    }).subscribe({
+      next: (response: PaymentResponse) => {
+        if (response?.R && response?.data) {
+          try {
+            const easeBuzzData = response.data;
+            
+            if (easeBuzzData?.payment_url) {
+              // Store payment info in session storage
+              sessionStorage.setItem('payment_uuid', uuid);
+              sessionStorage.setItem('payment_method', payment_method);
+              sessionStorage.setItem('payment_action', JSON.stringify(this.form.value));
+              localStorage.setItem('order_id', JSON.stringify(order_result.order_number));
+              
+              // Use window.location.href for Safari compatibility
+              window.location.href = easeBuzzData.payment_url;
+            } else {
+              console.error("Invalid response: Payment link is missing.");
+            }
+          } catch (error) {
+            console.error("Error parsing EaseBuzz response:", error);
+          }
+        } else {
+          console.error("Payment initiation failed:", response?.msg);
+        }
+      },
+      error: (err: PaymentError) => {
+        console.log("Error initiating payment:", err?.error?.message || err?.message);
+      }
+    });
+  }
+
+  // NeoKred2 Payment Integration
+  initiateNeoKred2PaymentIntent(payment_method: string, uuid: any, order_result: any) {
+    const userData = localStorage.getItem('account');
+    const parsedUserData = JSON.parse(userData || '{}')?.user || {};
+
+    const payload = {
+      uuid,
+      ...parsedUserData,
+      checkout: this.storeData?.order?.checkout
+    };
+
+    // Use initiateNeoKredIntent since NeoKred2 is not implemented
+    this.cartService.initiateNeoKredIntent({
+      uuid: payload.uuid,
+      email: payload.email,
+      total: this.storeData?.order?.checkout?.total?.total,
+      phone: parsedUserData.phone,
+      name: parsedUserData.name,
+      address: `${parsedUserData.address?.[0]?.city || ''} ${parsedUserData.address?.[0]?.area || ''}`
+    }).subscribe({
+      next: (response: PaymentResponse) => {
+        if (response?.R && response?.data) {
+          try {
+            const neoKredData = response.data;
+            
+            if (neoKredData?.payment_url) {
+              // Store payment info in session storage
+              sessionStorage.setItem('payment_uuid', uuid);
+              sessionStorage.setItem('payment_method', payment_method);
+              sessionStorage.setItem('payment_action', JSON.stringify(this.form.value));
+              localStorage.setItem('order_id', JSON.stringify(order_result.order_number));
+              
+              // Use window.location.href for Safari compatibility
+              window.location.href = neoKredData.payment_url;
+            } else {
+              console.error("Invalid response: Payment link is missing.");
+            }
+          } catch (error) {
+            console.error("Error parsing NeoKred2 response:", error);
+          }
+        } else {
+          console.error("Payment initiation failed:", response?.msg);
+        }
+      },
+      error: (err: PaymentError) => {
+        console.log("Error initiating payment:", err?.error?.message || err?.message);
+      }
+    });
   }
 
 }
