@@ -409,7 +409,7 @@
                        </div>
                       <div class="col-lg-5">
                         <ng-container *ngIf="(cartItem$ | async)?.length">
-                            <form [formGroup]="form" (ngSubmit)="placeorder()">
+                            <form [formGroup]="form" (ngSubmit)="placeorder()" #checkoutForm="ngForm">
                                 <div class="custom-box-loader">
                                     <div class="box-loader" *ngIf="loading">
                                         <app-loader [loaderClass]="'custom-loader-wrapper blur-bg'"></app-loader>
@@ -498,14 +498,15 @@
                                             </h4>
                                         </li>
                                     </ul>
-                                    <app-button
-                                        [class]="'btn theme-bg-color text-white btn-md w-100 mt-4 fw-bold my-order ios-button'"
-                                        [id]="'place_order'"
-                                        [style]="'touch-action: manipulation; -webkit-tap-highlight-color: transparent; cursor: pointer;'"
-                                        [disabled]="form.valid && checkoutTotal ? false : true"
-                                        (click)="placeorder()">
+                                    <button
+                                        type="submit"
+                                        class="btn theme-bg-color text-white btn-md w-100 mt-4 fw-bold my-order"
+                                        id="place_order"
+                                        [disabled]="!(form.valid && checkoutTotal)"
+                                        (touchstart)="$event.preventDefault(); $event.stopPropagation();"
+                                        (touchend)="$event.preventDefault(); $event.stopPropagation(); placeorder()">
                                         {{ 'Place Order' | translate }}
-                                    </app-button>
+                                    </button>
                                 </div>
                             </form>
                         </ng-container>
