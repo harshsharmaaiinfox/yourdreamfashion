@@ -416,7 +416,7 @@
                        </div>
                       <div class="col-lg-5">
                         <ng-container *ngIf="(cartItem$ | async)?.length">
-                            <form [formGroup]="form" (ngSubmit)="placeorder($event)">
+                            <form [formGroup]="form" (ngSubmit)="placeorder()">
                                 <div class="custom-box-loader">
                                     <ul class="summary-total">
                                         <li>
@@ -505,8 +505,7 @@
                                     <app-button
                                         [class]="'btn theme-bg-color text-white btn-md w-100 mt-4 fw-bold my-order'"
                                         [id]="'place_order'"
-                                        [disabled]="form.valid && checkoutTotal ? false : true"
-                                        (click)="placeorder($event)">
+                                        [disabled]="form.valid && checkoutTotal ? false : true">
                                         {{ 'Place Order' | translate }}
                                     </app-button>
                                 </div>
@@ -618,37 +617,3 @@
     </div>
     
 </ng-template>
-
-<style>
-.global-loader {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.9);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 999999;
-}
-
-.loader-wrapper {
-    text-align: center;
-    padding: 20px;
-    border-radius: 8px;
-    background: white;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-.loader-wrapper img {
-    display: block;
-    margin: 0 auto;
-}
-
-/* Add blur effect to the main content when loading */
-.checkout-section-2.loading {
-    filter: blur(2px);
-    pointer-events: none;
-}
-</style>
