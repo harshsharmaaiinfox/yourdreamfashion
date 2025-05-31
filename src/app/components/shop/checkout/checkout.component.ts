@@ -1098,75 +1098,72 @@ export class CheckoutComponent {
 
   placeorder(event?: Event) {
     if (event) {
-        event.preventDefault();
-        event.stopPropagation();
+      event.preventDefault();
+      event.stopPropagation();
     }
 
     // Prevent double submission
     if (this.loading) {
-        return;
+      return;
     }
 
     if (this.form.valid) {
-        this.loading = true;
-        
-        if (this.cpnRef && !this.cpnRef.nativeElement.value) {
-            this.form.controls['coupon'].reset();
+      this.loading = true;
+      
+      if (this.cpnRef && !this.cpnRef.nativeElement.value) {
+        this.form.controls['coupon'].reset();
+      }
+
+      const uuid = uuidv4();
+      const formData = {
+        ...this.form.value,
+        uuid: uuid
+      };
+
+      let action = new PlaceOrder(formData);
+
+      try {
+        if (this.payment_method === 'cash_free') {
+          this.initiateCashFreePaymentIntent(this.payment_method);
+        } else if (this.payment_method === 'sub_paisa') {
+          this.initiateSubPaisa(formData, this.payment_method);
+        } else if (this.payment_method === 'neoKred') {
+          this.initiateNeoKredPaymentIntent();
+        } else if (this.payment_method === 'zyaada_pay') {
+          this.initiateZyaadaPayPaymentIntent(this.payment_method);
+        } else if (this.payment_method === 'gaonvashi_cashfree') {
+          this.initiateGaonvashiCashFreePaymentIntent(this.payment_method);
+        } else if (this.payment_method === 'fashionwithtrends_neokred') {
+          this.orderService.placeOrder(action?.payload).pipe(
+            tap({
+              next: result => {
+                console.log(result);
+              },
+              error: err => {
+                this.loading = false;
+                throw new Error(err?.error?.message);
+              }
+            })
+          ).subscribe({
+            next: (result) => {
+              this.initiateFashionWithTrendsNeoCredIntent(this.payment_method, uuid, result);
+            },
+            error: (err) => {
+              this.loading = false;
+              console.log(err);
+            }
+          });
         }
-
-        const uuid = uuidv4();
-        const formData = {
-            ...this.form.value,
-            uuid: uuid
-        };
-
-        let action = new PlaceOrder(formData);
-
-        try {
-            // Add a small delay for iOS Safari to handle the touch event properly
-            setTimeout(() => {
-                if (this.payment_method === 'cash_free') {
-                    this.initiateCashFreePaymentIntent(this.payment_method);
-                } else if (this.payment_method === 'sub_paisa') {
-                    this.initiateSubPaisa(formData, this.payment_method);
-                } else if (this.payment_method === 'neoKred') {
-                    this.initiateNeoKredPaymentIntent();
-                } else if (this.payment_method === 'zyaada_pay') {
-                    this.initiateZyaadaPayPaymentIntent(this.payment_method);
-                } else if (this.payment_method === 'gaonvashi_cashfree') {
-                    this.initiateGaonvashiCashFreePaymentIntent(this.payment_method);
-                } else if (this.payment_method === 'fashionwithtrends_neokred') {
-                    this.orderService.placeOrder(action?.payload).pipe(
-                        tap({
-                            next: result => {
-                                console.log(result);
-                            },
-                            error: err => {
-                                this.loading = false;
-                                throw new Error(err?.error?.message);
-                            }
-                        })
-                    ).subscribe({
-                        next: (result) => {
-                            this.initiateFashionWithTrendsNeoCredIntent(this.payment_method, uuid, result);
-                        },
-                        error: (err) => {
-                            this.loading = false;
-                            console.log(err);
-                        }
-                    });
-                }
-            }, 100); // Small delay for iOS Safari
-        } catch (error) {
-            this.loading = false;
-            console.error('Error in placeorder:', error);
-        }
+      } catch (error) {
+        this.loading = false;
+        console.error('Error in placeorder:', error);
+      }
     } else {
-        // Mark all fields as touched to show validation errors
-        Object.keys(this.form.controls).forEach(key => {
-            const control = this.form.get(key);
-            control?.markAsTouched();
-        });
+      // Mark all fields as touched to show validation errors
+      Object.keys(this.form.controls).forEach(key => {
+        const control = this.form.get(key);
+        control?.markAsTouched();
+      });
     }
   }
 

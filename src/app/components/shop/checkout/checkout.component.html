@@ -414,7 +414,7 @@
                        </div>
                       <div class="col-lg-5">
                         <ng-container *ngIf="(cartItem$ | async)?.length">
-                            <form [formGroup]="form" (ngSubmit)="placeorder($event)" #checkoutForm="ngForm">
+                            <form [formGroup]="form" (ngSubmit)="placeorder()">
                                 <div class="custom-box-loader">
                                     <ul class="summary-total">
                                         <li>
@@ -500,17 +500,12 @@
                                             </h4>
                                         </li>
                                     </ul>
-                                    <button
-                                        type="button"
-                                        class="btn theme-bg-color text-white btn-md w-100 mt-4 fw-bold my-order"
-                                        id="place_order"
-                                        [disabled]="!(form.valid && checkoutTotal)"
-                                        (click)="placeorder($event)"
-                                        (touchstart)="$event.preventDefault(); $event.stopPropagation();"
-                                        (touchend)="$event.preventDefault(); $event.stopPropagation(); placeorder($event)"
-                                        style="-webkit-appearance: none; touch-action: manipulation; -webkit-tap-highlight-color: transparent;">
+                                    <app-button
+                                        [class]="'btn theme-bg-color text-white btn-md w-100 mt-4 fw-bold my-order'"
+                                        [id]="'place_order'"
+                                        [disabled]="form.valid && checkoutTotal ? false : true">
                                         {{ 'Place Order' | translate }}
-                                    </button>
+                                    </app-button>
                                 </div>
                             </form>
                         </ng-container>
@@ -620,67 +615,3 @@
     </div>
     
 </ng-template>
-
-<style>
-.full-screen-loader {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.9);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-}
-
-.full-screen-loader .custom-loader-wrapper {
-    position: relative;
-    transform: none;
-    left: auto;
-    top: auto;
-}
-
-.full-screen-loader .custom-loader-wrapper::before {
-    display: none;
-}
-
-.my-order {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-    cursor: pointer;
-    user-select: none;
-    -webkit-user-select: none;
-    -webkit-touch-callout: none;
-    position: relative;
-    z-index: 1;
-}
-
-/* iOS Safari specific styles */
-@supports (-webkit-touch-callout: none) {
-    .my-order {
-        touch-action: manipulation;
-        -webkit-touch-callout: none;
-        -webkit-user-select: none;
-        user-select: none;
-        cursor: pointer;
-    }
-    
-    .my-order:active {
-        opacity: 0.8;
-    }
-}
-
-/* Ensure popup appears above the button */
-.modal {
-    z-index: 9999;
-}
-
-.modal-backdrop {
-    z-index: 9998;
-}
-</style>
