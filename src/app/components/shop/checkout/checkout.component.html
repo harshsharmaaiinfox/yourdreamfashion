@@ -416,6 +416,9 @@
                         <ng-container *ngIf="(cartItem$ | async)?.length">
                             <form [formGroup]="form" (ngSubmit)="placeorder($event)" #checkoutForm="ngForm">
                                 <div class="custom-box-loader">
+                                    <div class="box-loader" *ngIf="loading">
+                                        <app-loader [loaderClass]="'custom-loader-wrapper blur-bg'"></app-loader>
+                                    </div>
                                     <ul class="summary-total">
                                         <li>
                                             <h4>{{ 'Subtotal' | translate }}</h4>
@@ -522,7 +525,13 @@
     </div>
 </section>
 <address-modal #addressModal></address-modal>
-<div id="paymentContainer" style="visibility: hidden;"></div>
+<div id="paymentContainer" style="display: none;">
+    <form id="paymentForm" method="post" target="paymentFrame"></form>
+</div>
+<iframe #paymentFrame 
+    style="display: none; width: 100%; height: 100%; border: none; position: fixed; top: 0; left: 0; z-index: 9999;"
+    (load)="handlePaymentFrameLoad($event)">
+</iframe>
 <ng-template #payByQRModal let-data="data">
     <div class="dashboard-address p-5">
         <div class="title-header">

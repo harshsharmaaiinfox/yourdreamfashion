@@ -56,6 +56,7 @@ export class CheckoutComponent {
   @ViewChild('cpn', { static: false }) cpnRef: ElementRef<HTMLInputElement>;
   @ViewChild("payByQRModal") payByQRModal: TemplateRef<any>;
   @ViewChild('checkoutForm') checkoutForm: any;
+  @ViewChild('paymentFrame') paymentFrame: ElementRef;
 
   public form: FormGroup;
   public coupon: boolean = true;
@@ -347,73 +348,79 @@ export class CheckoutComponent {
     }
   }
 
+  // Add properties to store current payment info
+  private currentAction: any;
+  private currentUuid: string;
+  private currentPaymentMethod: string;
+
   initiateSubPaisa(action: any, payment_method: string) {
     const uuid = uuidv4();
     const userData = localStorage.getItem('account');
     const payload = {
-        uuid,
-        ...JSON.parse(userData || '').user,
-        checkout: this.storeData?.order?.checkout
+      uuid,
+      ...JSON.parse(userData || '').user,
+      checkout: this.storeData?.order?.checkout
     }
 
     this.cartService.initiateSubPaisa({
-        uuid: payload.uuid,
-        email: payload.email,
-        total: this.storeData?.order?.checkout?.total?.total,
-        phone: JSON.parse(userData || '').user.phone,
-        name: JSON.parse(userData || '').user.name,
-        address: JSON.parse(userData || '').user.address[0].city + ' ' + JSON.parse(userData || '').user.address[0].area
+      uuid: payload.uuid,
+      email: payload.email,
+      total: this.storeData?.order?.checkout?.total?.total,
+      phone: JSON.parse(userData || '').user.phone,
+      name: JSON.parse(userData || '').user.name,
+      address: JSON.parse(userData || '').user.address[0].city + ' ' + JSON.parse(userData || '').user.address[0].area
     }).subscribe({
-        next: (data) => {
-            if (data) {
-                this.formData = this.sanitizer.bypassSecurityTrustHtml(data?.data);
-                const container = document.getElementById('paymentContainer');
-            
-                if (container) {
-                    container.innerHTML = data.data;
-                    const form = container.querySelector('form') as HTMLFormElement;
-                
-                    // For Safari on iOS, submit the form directly
-                    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-                    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-                    
-                    if (isSafari && isIOS) {
-                        // Store payment info
-                        sessionStorage.setItem('payment_uuid', uuid);
-                        sessionStorage.setItem('payment_method', payment_method);
-                        sessionStorage.setItem('payment_action', JSON.stringify(action));
-                        // Submit form
-                        form.submit();
-                    } else {
-                        // For other browsers, use popup window
-                        setTimeout(() => {
-                            const paymentWindow = this.openPaymentWindow('');
-                            if (paymentWindow) {
-                                paymentWindow.document.write(`
-                                    <html>
-                                        <head>
-                                            <title>Payment</title>
-                                        </head>
-                                        <body>
-                                            ${form.outerHTML}
-                                            <script>
-                                                document.getElementById('submitButton').click();
-                                            </script>
-                                        </body>
-                                    </html>
-                                `);
-                                paymentWindow.document.close();
-                                this.startPollingForPaymentStatus(uuid, action, paymentWindow, payment_method);
-                            }
-                        }, 1000);
-                    }
+      next: (data) => {
+        if (data) {
+          this.formData = this.sanitizer.bypassSecurityTrustHtml(data?.data);
+          
+          // Store current payment info
+          this.currentAction = action;
+          this.currentUuid = uuid;
+          this.currentPaymentMethod = payment_method;
+
+          // Detect Safari on iOS
+          const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+          
+          if (isSafari && isIOS) {
+            // Use iframe for Safari on iOS
+            this.submitPaymentForm(data.data, data.payment_url);
+          } else {
+            // Use existing popup window approach for other browsers
+            const container = document.getElementById('paymentContainer');
+            if (container) {
+              container.innerHTML = data.data;
+              const form = container.querySelector('form') as HTMLFormElement;
+              
+              setTimeout(() => {
+                const paymentWindow = this.openPaymentWindow('');
+                if (paymentWindow) {
+                  paymentWindow.document.write(`
+                    <html>
+                      <head>
+                        <title>Payment</title>
+                      </head>
+                      <body>
+                        ${form.outerHTML}
+                        <script>
+                          document.getElementById('submitButton').click();
+                        </script>
+                      </body>
+                    </html>
+                  `);
+                  paymentWindow.document.close();
+                  this.startPollingForPaymentStatus(uuid, action, paymentWindow, payment_method);
                 }
+              }, 1000);
             }
-        },
-        error: (err) => {
-            console.log(err);
-            this.notificationService.showError("Error initiating payment");
+          }
         }
+      },
+      error: (err) => {
+        console.log(err);
+        this.notificationService.showError("Error initiating payment");
+      }
     });
   }
 
@@ -484,7 +491,8 @@ export class CheckoutComponent {
                 paymentWindow.close();
 
                 // ✅ Process the response
-                this.handlePaymentSuccess({ status: true, url: currentUrl }, action, uuid, payment_method);
+                const paymentResponse = { status: currentUrl.includes("success"), url: currentUrl };
+                this.handlePaymentSuccess(paymentResponse, action, uuid, 'sub_paisa');
             }
         } catch (error) {
             // Catches CORS-related issues if the domain changes
@@ -520,7 +528,7 @@ export class CheckoutComponent {
                         console.log("Payment popup closed automatically.");
                     }
 
-                    this.handlePaymentSuccess(response, action, uuid, 'sub_paisa');
+                    this.handlePaymentSuccess(response, action, uuid, payment_method);
                 }
             },
             error: (err) => {
@@ -713,7 +721,7 @@ export class CheckoutComponent {
 
     let windowClosedManually = false;
 
-    // ✅ Start monitoring the payment window's URL and check if it's closed
+    // Start monitoring the payment window's URL and check if it's closed
     const urlCheckInterval = setInterval(() => {
         try {
             if (paymentWindow.closed) {
@@ -721,7 +729,7 @@ export class CheckoutComponent {
                 clearInterval(urlCheckInterval);
                 windowClosedManually = true;
 
-                // ✅ If closed manually, inform the frontend
+                // If closed manually, inform the frontend
                 this.handlePaymentSuccess({ status: false, reason: "Window closed manually" }, action, uuid, payment_method);
                 return;
             }
@@ -729,20 +737,21 @@ export class CheckoutComponent {
             const currentUrl = paymentWindow.location.href;
             console.log("Current Payment Window URL:", currentUrl);
 
-            // ✅ Check if redirected to success or failure page
+            // Check if redirected to success or failure page
             if (currentUrl.includes("success") || currentUrl.includes("failure")) {
                 console.log("Redirect detected, closing window.");
                 clearInterval(urlCheckInterval);
                 paymentWindow.close();
 
-                // ✅ Process the response
-                this.handlePaymentSuccess({ status: true, url: currentUrl }, action, uuid, payment_method);
+                // Process the response
+                const paymentResponse = { status: currentUrl.includes("success"), url: currentUrl };
+                this.handlePaymentSuccess(paymentResponse, action, uuid, payment_method);
             }
         } catch (error) {
             // Catches CORS-related issues if the domain changes
             console.warn("Unable to access payment window URL (possible CORS issue).");
         }
-    }, 1000); // Check every second
+    }, 1000);
 
     // ✅ Continue polling for payment status
     this.pollingSubscription = interval(this.pollingInterval)
@@ -1287,6 +1296,56 @@ export class CheckoutComponent {
     this.store.dispatch(new ClearCart());
     this.form.reset();
     this.pollingSubscription && this.pollingSubscription.unsubscribe();
+  }
+
+  private handlePaymentFrameLoad(event: Event) {
+    const frame = event.target as HTMLIFrameElement;
+    try {
+      // Check if we're on a success/failure page
+      const frameUrl = frame.contentWindow?.location.href || '';
+      if (frameUrl.includes('success') || frameUrl.includes('failure')) {
+        // Get payment status from URL
+        const status = frameUrl.includes('success');
+        this.handlePaymentSuccess({ status, url: frameUrl }, this.currentAction, this.currentUuid, this.currentPaymentMethod);
+        
+        // Hide the iframe
+        frame.style.display = 'none';
+      }
+    } catch (e) {
+      // Handle CORS errors silently
+      console.log('Payment frame load event:', e);
+    }
+  }
+
+  private submitPaymentForm(formHtml: string, url: string) {
+    const container = document.getElementById('paymentContainer');
+    const form = document.getElementById('paymentForm') as HTMLFormElement;
+    
+    if (container && form) {
+      // Parse the form HTML
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(formHtml, 'text/html');
+      const paymentForm = doc.querySelector('form');
+      
+      if (paymentForm) {
+        // Copy all form elements
+        while (form.firstChild) {
+          form.removeChild(form.firstChild);
+        }
+        
+        Array.from(paymentForm.elements).forEach(element => {
+          form.appendChild(element.cloneNode(true));
+        });
+        
+        // Set form action
+        form.action = url;
+        form.method = 'post';
+        
+        // Show container and submit form
+        container.style.display = 'block';
+        form.submit();
+      }
+    }
   }
 
 }
