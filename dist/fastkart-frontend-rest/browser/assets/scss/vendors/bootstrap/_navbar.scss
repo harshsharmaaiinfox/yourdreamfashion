@@ -45,6 +45,9 @@
     justify-content: space-between;
   }
 
+
+
+
   > .container,
   > .container-fluid {
     @extend %container-flex-properties;
@@ -95,10 +98,14 @@
   // scss-docs-end navbar-nav-css-vars
 
   display: flex;
-  flex-direction: column; // cannot use `inherit` to get the `.navbar`s value
+  flex-direction: row; // cannot use `inherit` to get the `.navbar`s value
   padding-left: 0;
   margin-bottom: 0;
   list-style: none;
+  gap:60px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  justify-content: center;
 
   .show > .nav-link,
   .nav-link.active {
