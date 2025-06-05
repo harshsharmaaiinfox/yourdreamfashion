@@ -1,120 +1,153 @@
 <div class="tab-pane fade show active">
-    <div class="dashboard-home">
-        <div class="title-header">
-            <div class="d-flex align-items-center">
-                <h5>{{ 'Dashboard' | translate }}</h5>
+    <!-- Hero Section -->
+    <div class="dashboard-hero bg-light p-4 rounded-3 mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2">{{ 'Welcome Back' | translate }}, <span class="text-primary">{{ (user$ | async)?.name! | titleCase }}</span></h2>
+                <p class="text-muted mb-0">{{ 'Here\'s what\'s happening with your account today' | translate }}</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <div class="profile-image-sm">
+                    <img src="assets/images/dashboard.png" class="rounded-circle" alt="profile" style="width: 80px; height: 80px; object-fit: cover;">
+                </div>
             </div>
         </div>
-        <div class="dashboard-user-name">
-            <h6 class="text-content">{{ 'Hello' | translate }}, <b class="text-title">{{ (user$ | async)?.name! | titleCase }}</b></h6>
-         
-        </div>
-        <!-- <div class="total-box">
-            <div class="row row-cols-xxl-3 g-sm-4 g-3">
-                <div>
-                    <div class="totle-contain">
-                        <div class="wallet-point-box">
-                            <img src="assets/images/wallet.png" class="img-1 " alt="wallet">
-                            <img src="assets/images/wallet.png" alt="wallet">
-                            <div class="totle-detail">
-                                <h5>{{ 'Balance'| translate}}</h5>
-                                <h3>{{ ((user$ | async)?.wallet ? (user$ | async)?.wallet?.balance : 0) | currencySymbol }}
-                                </h3>
-                            </div>
+    </div>
+
+    <!-- Quick Stats Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-wallet fa-2x text-primary"></i>
                         </div>
-                    </div>
-                </div>
-                <div>
-                    <div class="totle-contain">
-                        <div class="wallet-point-box">
-                            <img src="assets/images/coins.png" class="img-1 " alt="coin">
-                            <img src="assets/images/coins.png" alt="coin">
-                            <div class="totle-detail">
-                                <h5>{{ 'Total Points'| translate}}</h5>
-                                <h3>{{ (user$ | async)?.point ? (user$ | async)?.point?.balance : 0 }}</h3>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div>
-                    <div class="totle-contain">
-                        <div class="wallet-point-box">
-                            <img src="assets/images/package.png" class="img-1" alt="order">
-                            <img src="assets/images/package.png" alt="order">
-                            <div class="totle-detail">
-                                <h5>{{ 'Total Orders'| translate}}</h5>
-                                <h3>{{ (user$ | async)?.orders_count ? (user$ | async)?.orders_count : 0 }}</h3>
-                            </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-subtitle text-muted mb-1">{{ 'Balance' | translate }}</h6>
+                            <h3 class="card-title mb-0">{{ ((user$ | async)?.wallet ? (user$ | async)?.wallet?.balance : 0) | currencySymbol }}</h3>
                         </div>
                     </div>
                 </div>
             </div>
-        </div> -->
-        <div class="profile-about dashboard-bg-box mt-5">
-            <div class="row">
-                <div class="col-xxl-7">
-                    <div class="dashboard-title mb-3">
-                        <h3>{{ 'Profile Information'| translate}}</h3>
-                    </div>
-
-                    <div class="table-responsive">
-                        <table class="table">
-                            <tbody>
-                                <tr>
-                                    <td>{{ 'Name'| translate}}:</td>
-                                    <td>{{ (user$ | async)?.name | titleCase }}</td>
-                                </tr>
-                                <tr>
-                                    <td>{{ 'Phone'| translate}}:</td>
-                                    <td>
-                                        {{ (user$ | async)?.country_code }} {{ (user$ | async)?.phone }}
-                                    </td>
-                                </tr>
-                                <tr *ngIf="address">
-                                    <td>{{ 'Address'| translate}}:</td>
-                                    <td>
-                                        {{ address.street }}
-                                        {{ address.city }}, {{ address.area }},
-                                        {{ address.country_id }} {{ address.pincode }}
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="dashboard-title mb-3">
-                        <h3>{{ 'Login Details'| translate}}</h3>
-                    </div>
-
-                    <div class="table-responsive">
-                        <table class="table">
-                            <tbody>
-                                <tr>
-                                    <td>{{ 'Email'| translate}} :</td>
-                                    <td>
-                                        {{ (user$ | async)?.email }}
-                                        <a href="javascript:void(0)" (click)="ProfileModal.openModal()">{{ 'Edit' | translate }}</a>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>{{ 'Password'| translate}} :</td>
-                                    <td>
-                                        ●●●●●●
-                                        <a href="javascript:void(0)" (click)="PasswordModal.openModal()">{{ 'Edit' | translate }}</a>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-coins fa-2x text-warning"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-subtitle text-muted mb-1">{{ 'Total Points' | translate }}</h6>
+                            <h3 class="card-title mb-0">{{ (user$ | async)?.point ? (user$ | async)?.point?.balance : 0 }}</h3>
+                        </div>
                     </div>
                 </div>
-                <div class="col-xxl-5">
-                    <div class="profile-image">
-                        <img src="assets/images/dashboard.png" class="img-fluid" alt="dashboard-profile">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-shopping-bag fa-2x text-success"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-subtitle text-muted mb-1">{{ 'Total Orders' | translate }}</h6>
+                            <h3 class="card-title mb-0">{{ (user$ | async)?.orders_count ? (user$ | async)?.orders_count : 0 }}</h3>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Main Content -->
+    <div class="row g-4">
+        <!-- Profile Information -->
+        <div class="col-lg-12 ">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">{{ 'Profile Information' | translate }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">{{ 'Name' | translate }}</label>
+                            <p class="mb-0">{{ (user$ | async)?.name | titleCase }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">{{ 'Phone' | translate }}</label>
+                            <p class="mb-0">{{ (user$ | async)?.country_code }} {{ (user$ | async)?.phone }}</p>
+                        </div>
+                        <div class="col-12 mb-3" *ngIf="address">
+                            <label class="form-label text-muted">{{ 'Address' | translate }}</label>
+                            <p class="mb-0">
+                                {{ address.street }}, {{ address.city }}, {{ address.area }},
+                                {{ address.country_id }} {{ address.pincode }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Login Details -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">{{ 'Login Details' | translate }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">{{ 'Email' | translate }}</label>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <p class="mb-0">{{ (user$ | async)?.email }}</p>
+                                <button class="btn btn-link p-0" (click)="ProfileModal.openModal()">
+                                    <i class="fas fa-edit"></i> {{ 'Edit' | translate }}
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">{{ 'Password' | translate }}</label>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <p class="mb-0">●●●●●●</p>
+                                <button class="btn btn-link p-0" (click)="PasswordModal.openModal()">
+                                    <i class="fas fa-edit"></i> {{ 'Edit' | translate }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <!-- <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">{{ 'Quick Actions' | translate }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary">
+                            <i class="fas fa-shopping-cart me-2"></i> {{ 'View Orders' | translate }}
+                        </button>
+                        <button class="btn btn-outline-primary">
+                            <i class="fas fa-heart me-2"></i> {{ 'Wishlist' | translate }}
+                        </button>
+                        <button class="btn btn-outline-primary">
+                            <i class="fas fa-map-marker-alt me-2"></i> {{ 'Manage Addresses' | translate }}
+                        </button>
+                        <button class="btn btn-outline-primary">
+                            <i class="fas fa-bell me-2"></i> {{ 'Notifications' | translate }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div> -->
+    </div>
 </div>
+
 <app-edit-profile-modal #profileModal></app-edit-profile-modal>
 <app-change-password-modal #passwordModal></app-change-password-modal>

@@ -23,7 +23,7 @@
                 <tbody>
                     <tr *ngFor="let data of (download$ | async)?.data let i = index">
                         <td>
-                            <img src="{{ data.item_image }}" class="img-fluid" alt="image">
+                            <!-- <img src="{{ data.item_image }}" class="img-fluid" alt="image"> -->
                         </td>
                         <td class="table-name">{{ data.item_name }}</td>
                         <td>
@@ -44,8 +44,8 @@
     </div>
 </div>
 <app-no-data
-    [class]="'no-data-added'"
-    [image]="'assets/svg/empty-items.svg'"
+    [class]="'no-data-added mt-5'"
+  
     [text]="'No item found'"
     [description]="'No Orders have yet'"
     *ngIf="!(download$ | async)?.data?.length">

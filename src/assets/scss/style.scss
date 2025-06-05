@@ -993,3 +993,19 @@ h3.my-comp {
     margin-bottom: 0;
     margin-top: 20px;
 }
+#pills-tab a {
+  padding: 11px 10px;
+  background: #222222;
+  color: #fff;
+  font-size: 16px;
+  border-top-left-radius: 0px !important;
+  border-bottom-right-radius: 0px !important;
+}
+.user-dashboard-section .dashboard-left-sidebar {
+  background: transparent !important;
+  box-shadow:none !important;
+
+}
+.dashboard-hero span {
+  color: #009688 !important;
+}
