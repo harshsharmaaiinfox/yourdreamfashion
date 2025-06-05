@@ -139,7 +139,7 @@ export class ProductState {
 
   @Action(GetCategoryProducts)
   getCategoryProducts(ctx: StateContext<ProductStateModel>, action: GetProducts) {
-    if (action.payload) { action.payload['store_id'] = 23, action.payload['price'] = '700-2000' }
+    if (action.payload) { action.payload['store_id'] = 23, action.payload['price'] = '200-2000' }
     return this.productService.getProducts(action.payload).pipe(
       tap({
         next: (result: ProductModel) => {
