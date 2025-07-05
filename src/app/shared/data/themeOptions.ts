@@ -131,7 +131,7 @@ export const themeOptionsYourDreamFashion = {
                     "value": "wishlist"
                 }
             ],
-            "support_number": "+91 8941925859",
+            "support_number": "+91 6396005037",
             "support_email": "gaonvashisoftech@gmail.com",
             "play_store_url": null,
             "app_store_url": null,
