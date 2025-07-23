@@ -1,5 +1,5 @@
 import { Component, TemplateRef, ViewChild } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ModalDismissReasons, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Select, Store } from '@ngxs/store';
 import { Observable } from 'rxjs';
@@ -25,6 +25,27 @@ export class EditProfileModalComponent {
   public codes = data.countryCodes;
 
   @ViewChild("profileModal", { static: false }) ProfileModal: TemplateRef<string>;
+
+  // Custom validator for name field - only letters and spaces allowed
+  private nameValidator(control: AbstractControl): ValidationErrors | null {
+    if (!control.value) {
+      return null;
+    }
+    const namePattern = /^[a-zA-Z\s]+$/;
+    return namePattern.test(control.value) ? null : { invalidName: true };
+  }
+
+  // Method to prevent special characters and numbers on input
+  public onNameInput(event: any): void {
+    const input = event.target;
+    const value = input.value;
+    const filteredValue = value.replace(/[^a-zA-Z\s]/g, '');
+    
+    if (value !== filteredValue) {
+      input.value = filteredValue;
+      this.form.get('name')?.setValue(filteredValue, { emitEvent: false });
+    }
+  }
   
   constructor(private modalService: NgbModal,
     private store: Store,
@@ -32,7 +53,7 @@ export class EditProfileModalComponent {
       this.user$.subscribe(user => {
         this.flicker = true;
         this.form = this.formBuilder.group({
-          name: new FormControl(user?.name, [Validators.required]),
+          name: new FormControl(user?.name, [Validators.required, this.nameValidator.bind(this)]),
           email: new FormControl(user?.email, [Validators.required, Validators.email]),
           phone: new FormControl(user?.phone, [Validators.required, Validators.pattern(/^[0-9]*$/)]),
           country_code: new FormControl(user?.country_code), 

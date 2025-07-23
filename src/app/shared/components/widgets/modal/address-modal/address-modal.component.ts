@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, TemplateRef, ViewChild } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ModalDismissReasons, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Select, Store } from '@ngxs/store';
 import { debounceTime, distinctUntilChanged, map, Observable } from 'rxjs';
@@ -47,6 +47,27 @@ export class AddressModalComponent {
   public filterPinCodeAreas: any;
   public checkIfPinCodeExists = true;
 
+  // Custom validator for title field - only letters and spaces allowed
+  private titleValidator(control: AbstractControl): ValidationErrors | null {
+    if (!control.value) {
+      return null;
+    }
+    const titlePattern = /^[a-zA-Z\s]+$/;
+    return titlePattern.test(control.value) ? null : { invalidTitle: true };
+  }
+
+  // Method to prevent special characters and numbers on input
+  public onTitleInput(event: any): void {
+    const input = event.target;
+    const value = input.value;
+    const filteredValue = value.replace(/[^a-zA-Z\s]/g, '');
+    
+    if (value !== filteredValue) {
+      input.value = filteredValue;
+      this.form.get('title')?.setValue(filteredValue, { emitEvent: false });
+    }
+  }
+
   constructor(
     private modalService: NgbModal,
     private store: Store,
@@ -57,7 +78,7 @@ export class AddressModalComponent {
 
   ) {
     this.form = this.formBuilder.group({
-      title: new FormControl('', [Validators.required]),
+      title: new FormControl('', [Validators.required, this.titleValidator.bind(this)]),
       street: new FormControl('', [Validators.required]),
       state_id: new FormControl('', [Validators.required]),
       country_id: new FormControl('', [Validators.required]),

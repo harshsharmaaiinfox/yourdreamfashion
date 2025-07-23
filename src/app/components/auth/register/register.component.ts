@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Store, Select } from '@ngxs/store';
 import { Observable } from 'rxjs';
@@ -31,8 +31,28 @@ export class RegisterComponent {
   public codes = data.countryCodes;
   public tnc = new FormControl(false, [Validators.requiredTrue]);
 
-
   public reCaptcha: boolean = true;
+
+  // Custom validator for name field - only letters and spaces allowed
+  private nameValidator(control: AbstractControl): ValidationErrors | null {
+    if (!control.value) {
+      return null;
+    }
+    const namePattern = /^[a-zA-Z\s]+$/;
+    return namePattern.test(control.value) ? null : { invalidName: true };
+  }
+
+  // Method to prevent special characters and numbers on input
+  public onNameInput(event: any): void {
+    const input = event.target;
+    const value = input.value;
+    const filteredValue = value.replace(/[^a-zA-Z\s]/g, '');
+    
+    if (value !== filteredValue) {
+      input.value = filteredValue;
+      this.form.get('name')?.setValue(filteredValue, { emitEvent: false });
+    }
+  }
   
 
   constructor(
@@ -42,7 +62,7 @@ export class RegisterComponent {
     private notificationService: NotificationService
   ) {
     this.form = this.formBuilder.group({
-      name: new FormControl('', [Validators.required]),
+      name: new FormControl('', [Validators.required, this.nameValidator.bind(this)]),
       email: new FormControl('', [Validators.required, Validators.email]),
       phone: new FormControl('', [Validators.required, Validators.pattern(/^[0-9]*$/)]),
       country_code: new FormControl('91', [Validators.required]),

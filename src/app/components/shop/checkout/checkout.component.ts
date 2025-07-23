@@ -1,6 +1,6 @@
 import { Component, ElementRef, TemplateRef, ViewChild } from '@angular/core';
 import { Store, Select } from '@ngxs/store';
-import { FormBuilder, FormControl, FormGroup, Validators, FormArray } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, Validators, FormArray, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Select2Data, Select2UpdateEvent } from 'ng-select2-component';
 import { Router } from '@angular/router';
 import { Observable, Subscription, map, of } from 'rxjs';
@@ -89,6 +89,47 @@ export class CheckoutComponent {
   public formData!: any;
 
   private pollingSubscription!: Subscription;
+
+  // Custom validator for name and title fields - only letters and spaces allowed
+  private nameValidator(control: AbstractControl): ValidationErrors | null {
+    if (!control.value) {
+      return null;
+    }
+    const namePattern = /^[a-zA-Z\s]+$/;
+    return namePattern.test(control.value) ? null : { invalidName: true };
+  }
+
+  // Method to prevent special characters and numbers on input for name fields
+  public onNameInput(event: any): void {
+    const input = event.target;
+    const value = input.value;
+    const filteredValue = value.replace(/[^a-zA-Z\s]/g, '');
+    
+    if (value !== filteredValue) {
+      input.value = filteredValue;
+      // Update the form control value
+      const formControlName = input.getAttribute('formControlName');
+      if (formControlName) {
+        this.form.get(formControlName)?.setValue(filteredValue, { emitEvent: false });
+      }
+    }
+  }
+
+  // Method to prevent special characters and numbers on input for title fields
+  public onTitleInput(event: any): void {
+    const input = event.target;
+    const value = input.value;
+    const filteredValue = value.replace(/[^a-zA-Z\s]/g, '');
+    
+    if (value !== filteredValue) {
+      input.value = filteredValue;
+      // Update the form control value
+      const formControlName = input.getAttribute('formControlName');
+      if (formControlName) {
+        this.form.get(formControlName)?.setValue(filteredValue, { emitEvent: false });
+      }
+    }
+  }
   private pollingInterval = 5000; // Poll every 5 seconds
 
   storeData: any;
@@ -128,13 +169,13 @@ export class CheckoutComponent {
       delivery_interval: new FormControl(),
       payment_method: new FormControl('', [Validators.required]),
       create_account: new FormControl(false),
-      name: new FormControl('', [Validators.required]),
+      name: new FormControl('', [Validators.required, this.nameValidator.bind(this)]),
       email: new FormControl('', [Validators.required, Validators.email]),
       country_code: new FormControl('91', [Validators.required]),
       phone: new FormControl('', [Validators.required]),
       password: new FormControl(),
       shipping_address: new FormGroup({
-        title: new FormControl('', [Validators.required]),
+        title: new FormControl('', [Validators.required, this.nameValidator.bind(this)]),
         street: new FormControl('', [Validators.required]),
         city: new FormControl('', [Validators.required]),
         phone: new FormControl('', [Validators.required]),
@@ -145,7 +186,7 @@ export class CheckoutComponent {
       }),
       billing_address: new FormGroup({
         same_shipping: new FormControl(false),
-        title: new FormControl('', [Validators.required]),
+        title: new FormControl('', [Validators.required, this.nameValidator.bind(this)]),
         street: new FormControl('', [Validators.required]),
         city: new FormControl('', [Validators.required]),
         phone: new FormControl('', [Validators.required]),

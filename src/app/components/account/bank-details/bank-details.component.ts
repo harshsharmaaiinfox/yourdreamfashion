@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Select, Store } from '@ngxs/store';
 import { Observable } from 'rxjs';
 import { GetPaymentDetails, UpdatePaymentDetails } from '../../../shared/action/payment-details.action';
@@ -18,11 +18,65 @@ export class BankDetailsComponent {
   public form: FormGroup;
   public active = 'bank';
 
+  // Custom validator for bank account number - only numbers allowed
+  private bankAccountValidator(control: AbstractControl): ValidationErrors | null {
+    if (!control.value) {
+      return null;
+    }
+    const accountPattern = /^[0-9]+$/;
+    return accountPattern.test(control.value) ? null : { invalidAccount: true };
+  }
+
+  // Custom validator for bank name and holder name - only letters and spaces allowed
+  private nameValidator(control: AbstractControl): ValidationErrors | null {
+    if (!control.value) {
+      return null;
+    }
+    const namePattern = /^[a-zA-Z\s]+$/;
+    return namePattern.test(control.value) ? null : { invalidName: true };
+  }
+
+  // Method to prevent special characters in bank account number
+  public onBankAccountInput(event: any): void {
+    const input = event.target;
+    const value = input.value;
+    const filteredValue = value.replace(/[^0-9]/g, '');
+    
+    if (value !== filteredValue) {
+      input.value = filteredValue;
+      this.form.get('bank_account_no')?.setValue(filteredValue, { emitEvent: false });
+    }
+  }
+
+  // Method to prevent special characters and numbers in bank name
+  public onBankNameInput(event: any): void {
+    const input = event.target;
+    const value = input.value;
+    const filteredValue = value.replace(/[^a-zA-Z\s]/g, '');
+    
+    if (value !== filteredValue) {
+      input.value = filteredValue;
+      this.form.get('bank_name')?.setValue(filteredValue, { emitEvent: false });
+    }
+  }
+
+  // Method to prevent special characters and numbers in holder name
+  public onHolderNameInput(event: any): void {
+    const input = event.target;
+    const value = input.value;
+    const filteredValue = value.replace(/[^a-zA-Z\s]/g, '');
+    
+    if (value !== filteredValue) {
+      input.value = filteredValue;
+      this.form.get('bank_holder_name')?.setValue(filteredValue, { emitEvent: false });
+    }
+  }
+
   constructor(private store: Store) {
     this.form = new FormGroup({
-      bank_account_no: new FormControl(),
-      bank_name: new FormControl(),
-      bank_holder_name: new FormControl(),
+      bank_account_no: new FormControl('', [this.bankAccountValidator.bind(this)]),
+      bank_name: new FormControl('', [this.nameValidator.bind(this)]),
+      bank_holder_name: new FormControl('', [this.nameValidator.bind(this)]),
       swift: new FormControl(),
       ifsc: new FormControl(),
       paypal_email: new FormControl('', [Validators.email]),
