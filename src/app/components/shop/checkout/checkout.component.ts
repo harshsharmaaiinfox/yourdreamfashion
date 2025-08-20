@@ -95,7 +95,13 @@ export class CheckoutComponent {
     if (!control.value) {
       return null;
     }
-    const namePattern = /^[a-zA-Z\s]+$/;
+    const namePattern = /^[a-zA-Z]+(\s[a-zA-Z]+)*$/;
+    const trimmedValue = control.value.trim();
+    
+    if (trimmedValue.length < 2) {
+      return { invalidName: true };
+    }
+    
     return namePattern.test(control.value) ? null : { invalidName: true };
   }
 
@@ -103,7 +109,10 @@ export class CheckoutComponent {
   public onNameInput(event: any): void {
     const input = event.target;
     const value = input.value;
+    // Remove special characters and numbers, keep only letters and spaces
     const filteredValue = value.replace(/[^a-zA-Z\s]/g, '');
+    // Remove extra spaces and ensure proper formatting
+    const formattedValue = filteredValue.replace(/\s+/g, ' ').trim();
     
     if (value !== filteredValue) {
       input.value = filteredValue;
@@ -119,7 +128,10 @@ export class CheckoutComponent {
   public onTitleInput(event: any): void {
     const input = event.target;
     const value = input.value;
+    // Remove special characters and numbers, keep only letters and spaces
     const filteredValue = value.replace(/[^a-zA-Z\s]/g, '');
+    // Remove extra spaces and ensure proper formatting
+    const formattedValue = filteredValue.replace(/\s+/g, ' ').trim();
     
     if (value !== filteredValue) {
       input.value = filteredValue;
@@ -129,6 +141,132 @@ export class CheckoutComponent {
         this.form.get(formControlName)?.setValue(filteredValue, { emitEvent: false });
       }
     }
+  }
+
+  // Method to prevent typing special characters and numbers in real-time for name fields
+  public onNameKeypress(event: KeyboardEvent): boolean {
+    const char = String.fromCharCode(event.which);
+    const pattern = /[a-zA-Z\s]/;
+    
+    if (!pattern.test(char)) {
+      event.preventDefault();
+      return false;
+    }
+    return true;
+  }
+
+  // Method to prevent typing special characters and numbers in real-time for title fields
+  public onTitleKeypress(event: KeyboardEvent): boolean {
+    const char = String.fromCharCode(event.which);
+    const pattern = /[a-zA-Z\s]/;
+    
+    if (!pattern.test(char)) {
+      event.preventDefault();
+      return false;
+    }
+    return true;
+  }
+
+  // Method to prevent non-numeric input in phone field
+  public onPhoneInput(event: any): void {
+    const input = event.target;
+    const value = input.value;
+    // Get the form control name from the input element
+    const formControlName = input.getAttribute('formControlName');
+    
+    // Remove any non-numeric characters
+    const numericValue = value.replace(/[^0-9]/g, '');
+    
+    if (value !== numericValue) {
+      input.value = numericValue;
+      // Update the form control value
+      if (formControlName) {
+        this.form.get(formControlName)?.setValue(numericValue, { emitEvent: false });
+      }
+    }
+    
+    // Limit to 10 digits
+    if (numericValue.length > 10) {
+      const truncatedValue = numericValue.slice(0, 10);
+      input.value = truncatedValue;
+      if (formControlName) {
+        this.form.get(formControlName)?.setValue(truncatedValue, { emitEvent: false });
+      }
+    }
+  }
+
+  // Method to prevent typing alphabets in real-time for phone fields
+  public onPhoneKeypress(event: KeyboardEvent): boolean {
+    const char = String.fromCharCode(event.which);
+    const pattern = /[0-9]/;
+    
+    if (!pattern.test(char)) {
+      event.preventDefault();
+      return false;
+    }
+    return true;
+  }
+
+  // Method to prevent pasting invalid content in name field
+  public onNamePaste(event: ClipboardEvent): void {
+    event.preventDefault();
+    const pastedText = event.clipboardData?.getData('text/plain') || '';
+    const filteredText = pastedText.replace(/[^a-zA-Z\s]/g, '');
+    const formattedText = filteredText.replace(/\s+/g, ' ').trim();
+    
+    if (formattedText) {
+      const input = event.target as HTMLInputElement;
+      input.value = formattedText;
+      const formControlName = input.getAttribute('formControlName');
+      if (formControlName) {
+        this.form.get(formControlName)?.setValue(formattedText, { emitEvent: false });
+      }
+    }
+  }
+
+  // Method to prevent pasting invalid content in title field
+  public onTitlePaste(event: ClipboardEvent): void {
+    event.preventDefault();
+    const pastedText = event.clipboardData?.getData('text/plain') || '';
+    const filteredText = pastedText.replace(/[^a-zA-Z\s]/g, '');
+    const formattedText = filteredText.replace(/\s+/g, ' ').trim();
+    
+    if (formattedText) {
+      const input = event.target as HTMLInputElement;
+      input.value = formattedText;
+      const formControlName = input.getAttribute('formControlName');
+      if (formControlName) {
+        this.form.get(formControlName)?.setValue(formattedText, { emitEvent: false });
+      }
+    }
+  }
+
+  // Method to prevent pasting invalid content in phone field
+  public onPhonePaste(event: ClipboardEvent): void {
+    event.preventDefault();
+    const pastedText = event.clipboardData?.getData('text/plain') || '';
+    const numericText = pastedText.replace(/[^0-9]/g, '');
+    const truncatedText = numericText.slice(0, 10);
+    
+    if (truncatedText) {
+      const input = event.target as HTMLInputElement;
+      input.value = truncatedText;
+      const formControlName = input.getAttribute('formControlName');
+      if (formControlName) {
+        this.form.get(formControlName)?.setValue(truncatedText, { emitEvent: false });
+      }
+    }
+  }
+
+  // Custom validator for password field - minimum 8 characters
+  private passwordValidator(control: AbstractControl): ValidationErrors | null {
+    if (!control.value) {
+      return null;
+    }
+    if (control.value.length < 8) {
+      return { invalidPassword: true };
+    }
+    return null;
   }
   private pollingInterval = 5000; // Poll every 5 seconds
 
@@ -172,13 +310,13 @@ export class CheckoutComponent {
       name: new FormControl('', [Validators.required, this.nameValidator.bind(this)]),
       email: new FormControl('', [Validators.required, Validators.email]),
       country_code: new FormControl('91', [Validators.required]),
-      phone: new FormControl('', [Validators.required]),
-      password: new FormControl(),
+      phone: new FormControl('', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]),
+      password: new FormControl('', [Validators.required, this.passwordValidator.bind(this)]),
       shipping_address: new FormGroup({
         title: new FormControl('', [Validators.required, this.nameValidator.bind(this)]),
         street: new FormControl('', [Validators.required]),
         city: new FormControl('', [Validators.required]),
-        phone: new FormControl('', [Validators.required]),
+        phone: new FormControl('', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]),
         pincode: new FormControl('', [Validators.required]),
         country_code: new FormControl('91', [Validators.required]),
         country_id: new FormControl('', [Validators.required]),
@@ -189,7 +327,7 @@ export class CheckoutComponent {
         title: new FormControl('', [Validators.required, this.nameValidator.bind(this)]),
         street: new FormControl('', [Validators.required]),
         city: new FormControl('', [Validators.required]),
-        phone: new FormControl('', [Validators.required]),
+        phone: new FormControl('', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]),
         pincode: new FormControl('', [Validators.required]),
         country_code: new FormControl('91', [Validators.required]),
         country_id: new FormControl('', [Validators.required]),
@@ -280,20 +418,29 @@ export class CheckoutComponent {
     });
 
     this.form.controls['phone']?.valueChanges.subscribe((value) => {
-      if(value && value.toString().length > 10) {
-        this.form.controls['phone']?.setValue(+value.toString().slice(0, 10));
+      if (value && value.toString().length !== 10) {
+        this.form.controls['phone'].markAsTouched();
+        this.form.controls['phone'].setErrors({invalid: true});
+      } else if (value && value.toString().length === 10) {
+        this.form.controls['phone'].setErrors(null);
       }
     });
 
     this.form.get('shipping_address.phone')?.valueChanges.subscribe((value) => {
-      if(value && value.toString().length > 10) {
-        this.form.get('shipping_address.phone')?.setValue(+value.toString().slice(0, 10));
+      if (value && value.toString().length !== 10) {
+        this.form.get('shipping_address.phone')?.markAsTouched();
+        this.form.get('shipping_address.phone')?.setErrors({invalid: true});
+      } else if (value && value.toString().length === 10) {
+        this.form.get('shipping_address.phone')?.setErrors(null);
       }
     });
 
     this.form.get('billing_address.phone')?.valueChanges.subscribe((value) => {
-      if(value && value.toString().length > 10) {
-        this.form.get('billing_address.phone')?.setValue(+value.toString().slice(0, 10));
+      if (value && value.toString().length !== 10) {
+        this.form.get('billing_address.phone')?.markAsTouched();
+        this.form.get('billing_address.phone')?.setErrors({invalid: true});
+      } else if (value && value.toString().length === 10) {
+        this.form.get('billing_address.phone')?.setErrors(null);
       }
     });
     

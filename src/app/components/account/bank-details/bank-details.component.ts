@@ -32,7 +32,13 @@ export class BankDetailsComponent {
     if (!control.value) {
       return null;
     }
-    const namePattern = /^[a-zA-Z\s]+$/;
+    const namePattern = /^[a-zA-Z]+(\s[a-zA-Z]+)*$/;
+    const trimmedValue = control.value.trim();
+    
+    if (trimmedValue.length < 2) {
+      return { invalidName: true };
+    }
+    
     return namePattern.test(control.value) ? null : { invalidName: true };
   }
 
@@ -40,11 +46,12 @@ export class BankDetailsComponent {
   public onBankAccountInput(event: any): void {
     const input = event.target;
     const value = input.value;
-    const filteredValue = value.replace(/[^0-9]/g, '');
+    // Remove any non-numeric characters
+    const numericValue = value.replace(/[^0-9]/g, '');
     
-    if (value !== filteredValue) {
-      input.value = filteredValue;
-      this.form.get('bank_account_no')?.setValue(filteredValue, { emitEvent: false });
+    if (value !== numericValue) {
+      input.value = numericValue;
+      this.form.get('bank_account_no')?.setValue(numericValue, { emitEvent: false });
     }
   }
 
@@ -52,7 +59,10 @@ export class BankDetailsComponent {
   public onBankNameInput(event: any): void {
     const input = event.target;
     const value = input.value;
+    // Remove special characters and numbers, keep only letters and spaces
     const filteredValue = value.replace(/[^a-zA-Z\s]/g, '');
+    // Remove extra spaces and ensure proper formatting
+    const formattedValue = filteredValue.replace(/\s+/g, ' ').trim();
     
     if (value !== filteredValue) {
       input.value = filteredValue;
@@ -64,7 +74,10 @@ export class BankDetailsComponent {
   public onHolderNameInput(event: any): void {
     const input = event.target;
     const value = input.value;
+    // Remove special characters and numbers, keep only letters and spaces
     const filteredValue = value.replace(/[^a-zA-Z\s]/g, '');
+    // Remove extra spaces and ensure proper formatting
+    const formattedValue = filteredValue.replace(/\s+/g, ' ').trim();
     
     if (value !== filteredValue) {
       input.value = filteredValue;
@@ -72,11 +85,65 @@ export class BankDetailsComponent {
     }
   }
 
+  // Method to prevent typing special characters and numbers in real-time for name fields
+  public onNameKeypress(event: KeyboardEvent): boolean {
+    const char = String.fromCharCode(event.which);
+    const pattern = /[a-zA-Z\s]/;
+    
+    if (!pattern.test(char)) {
+      event.preventDefault();
+      return false;
+    }
+    return true;
+  }
+
+  // Method to prevent typing alphabets in real-time for bank account field
+  public onBankAccountKeypress(event: KeyboardEvent): boolean {
+    const char = String.fromCharCode(event.which);
+    const pattern = /[0-9]/;
+    
+    if (!pattern.test(char)) {
+      event.preventDefault();
+      return false;
+    }
+    return true;
+  }
+
+  // Method to prevent pasting invalid content in name fields
+  public onNamePaste(event: ClipboardEvent): void {
+    event.preventDefault();
+    const pastedText = event.clipboardData?.getData('text/plain') || '';
+    const filteredText = pastedText.replace(/[^a-zA-Z\s]/g, '');
+    const formattedText = filteredText.replace(/\s+/g, ' ').trim();
+    
+    if (formattedText) {
+      const input = event.target as HTMLInputElement;
+      input.value = formattedText;
+      const formControlName = input.getAttribute('formControlName');
+      if (formControlName) {
+        this.form.get(formControlName)?.setValue(formattedText, { emitEvent: false });
+      }
+    }
+  }
+
+  // Method to prevent pasting invalid content in bank account field
+  public onBankAccountPaste(event: ClipboardEvent): void {
+    event.preventDefault();
+    const pastedText = event.clipboardData?.getData('text/plain') || '';
+    const numericText = pastedText.replace(/[^0-9]/g, '');
+    
+    if (numericText) {
+      const input = event.target as HTMLInputElement;
+      input.value = numericText;
+      this.form.get('bank_account_no')?.setValue(numericText, { emitEvent: false });
+    }
+  }
+
   constructor(private store: Store) {
     this.form = new FormGroup({
-      bank_account_no: new FormControl('', [this.bankAccountValidator.bind(this)]),
-      bank_name: new FormControl('', [this.nameValidator.bind(this)]),
-      bank_holder_name: new FormControl('', [this.nameValidator.bind(this)]),
+      bank_account_no: new FormControl('', [Validators.required, this.bankAccountValidator.bind(this)]),
+      bank_name: new FormControl('', [Validators.required, this.nameValidator.bind(this)]),
+      bank_holder_name: new FormControl('', [Validators.required, this.nameValidator.bind(this)]),
       swift: new FormControl(),
       ifsc: new FormControl(),
       paypal_email: new FormControl('', [Validators.email]),

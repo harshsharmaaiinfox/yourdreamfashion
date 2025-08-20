@@ -15,7 +15,7 @@
                 <div class="col-xxl-12">
                     <div class="">
                         <label class="form-label" for="name">{{ 'full_name' | translate }}</label>
-                        <input class="form-control" id="name" type="text" placeholder="{{ 'enter_name' | translate }}" formControlName="name" (input)="onNameInput($event)" />
+                        <input class="form-control" id="name" type="text" placeholder="{{ 'enter_name' | translate }}" formControlName="name" (input)="onNameInput($event)" (keypress)="onNameKeypress($event)" (paste)="onNamePaste($event)" />
                         <div class="invalid-feedback" *ngIf="form?.controls?.['name']?.touched && form.controls['name']?.errors?.['required']">
                             {{ 'name_is_required' | translate }}
                         </div>
@@ -53,12 +53,15 @@
                                 </div>
                             </ng-template>
                         </select2>
-                        <input type="number" class="form-control intl-input-padding" formControlName="phone" placeholder="{{ 'enter_phone' | translate }}" name="phone">
+                        <input type="text" class="form-control intl-input-padding" formControlName="phone" placeholder="{{ 'enter_phone' | translate }}" name="phone" (input)="onPhoneInput($event)" (keypress)="onPhoneKeypress($event)" (paste)="onPhonePaste($event)" maxlength="10">
                         <div class="invalid-feedback" *ngIf="form.controls['phone'].touched && form.controls['phone'].errors?.['required']">
                             {{ 'phone_number_is_required' | translate }}
                         </div>
                         <div class="invalid-feedback" *ngIf="form.controls['phone'].touched && form.controls['phone'].errors?.['pattern']">
-                            {{ 'phone_number_is_invalid' | translate }}
+                            {{ 'Phone Number must be exactly 10 digits' | translate }}
+                        </div>
+                        <div class="invalid-feedback" *ngIf="form.controls['phone'].touched && form.controls['phone'].errors?.['invalid']">
+                            {{ 'Phone Number must be exactly 10 digits' | translate }}
                         </div>
                     </div>
                 </div>
