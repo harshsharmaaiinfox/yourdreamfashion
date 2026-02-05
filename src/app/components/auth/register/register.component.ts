@@ -54,8 +54,6 @@ export class RegisterComponent {
     const value = input.value;
     // Remove special characters and numbers, keep only letters and spaces
     const filteredValue = value.replace(/[^a-zA-Z\s]/g, '');
-    // Remove extra spaces and ensure proper formatting
-    const formattedValue = filteredValue.replace(/\s+/g, ' ').trim();
     
     if (value !== filteredValue) {
       input.value = filteredValue;

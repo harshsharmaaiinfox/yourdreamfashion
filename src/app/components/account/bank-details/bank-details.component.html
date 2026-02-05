@@ -5,13 +5,19 @@
 </div>
 <form class="themeform-auth" [formGroup]="form" (ngSubmit)="submit()">
     <div class="row mb-3 align-items-center">
-        <label for="bank_account_no" class="form-label col-xxl-2 col-lg-12 col-md-3">{{ 'Bank Account No.'| translate}}</label>
+        <label for="bank_account_no" class="form-label col-xxl-2 col-lg-12 col-md-3">{{ 'Bank Account No.'|
+            translate}}</label>
         <div class="col-xxl-10 col-lg-12 col-md-9">
-            <input type="text" class="form-control" id="bank_account_no" placeholder="{{ 'Enter bank Account Number' | translate }}" formControlName="bank_account_no" (input)="onBankAccountInput($event)" (keypress)="onBankAccountKeypress($event)" (paste)="onBankAccountPaste($event)">
-            <div class="invalid-feedback" *ngIf="form?.controls?.['bank_account_no']?.touched && form.controls['bank_account_no']?.errors?.['required']">
+            <input type="text" class="form-control" id="bank_account_no"
+                placeholder="{{ 'Enter bank Account Number' | translate }}" formControlName="bank_account_no"
+                pattern="[0-9]*" maxlength="16" (input)="onBankAccountInput($event)"
+                (keypress)="onBankAccountKeypress($event)" (paste)="onBankAccountPaste($event)">
+            <div class="invalid-feedback"
+                *ngIf="form?.controls?.['bank_account_no']?.touched && form.controls['bank_account_no']?.errors?.['required']">
                 {{ 'Bank Account Number is Required' | translate }}
             </div>
-            <div class="invalid-feedback" *ngIf="form?.controls?.['bank_account_no']?.touched && form.controls['bank_account_no']?.errors?.['invalidAccount']">
+            <div class="invalid-feedback"
+                *ngIf="form?.controls?.['bank_account_no']?.touched && form.controls['bank_account_no']?.errors?.['invalidAccount']">
                 {{ 'Only numbers are allowed' | translate }}
             </div>
         </div>
@@ -19,23 +25,33 @@
     <div class="row mb-3 align-items-center">
         <label for="bank_name" class="form-label col-xxl-2 col-lg-12 col-md-3">{{ 'Bank Name'| translate}}</label>
         <div class="col-xxl-10 col-lg-12 col-md-9">
-            <input type="text" class="form-control" id="bank_name" placeholder="{{ 'Enter Bank Name' | translate }}" formControlName="bank_name" (input)="onBankNameInput($event)" (keypress)="onNameKeypress($event)" (paste)="onNamePaste($event)">
-            <div class="invalid-feedback" *ngIf="form?.controls?.['bank_name']?.touched && form.controls['bank_name']?.errors?.['required']">
+            <input type="text" class="form-control" id="bank_name" placeholder="{{ 'Enter Bank Name' | translate }}"
+                formControlName="bank_name" pattern="[a-zA-Z\s]*" (input)="onBankNameInput($event)"
+                (keypress)="onNameKeypress($event)" (paste)="onNamePaste($event)">
+            <div class="invalid-feedback"
+                *ngIf="form?.controls?.['bank_name']?.touched && form.controls['bank_name']?.errors?.['required']">
                 {{ 'Bank Name is Required' | translate }}
             </div>
-            <div class="invalid-feedback" *ngIf="form?.controls?.['bank_name']?.touched && form.controls['bank_name']?.errors?.['invalidName']">
+            <div class="invalid-feedback"
+                *ngIf="form?.controls?.['bank_name']?.touched && form.controls['bank_name']?.errors?.['invalidName']">
                 {{ 'Only letters and spaces are allowed' | translate }}
             </div>
         </div>
     </div>
     <div class="row mb-3 align-items-center">
-        <label for="bank_holder_name" class="form-label col-xxl-2 col-lg-12 col-md-3">{{ 'Holder Name'| translate}}</label>
+        <label for="bank_holder_name" class="form-label col-xxl-2 col-lg-12 col-md-3">{{ 'Holder Name'|
+            translate}}</label>
         <div class="col-xxl-10 col-lg-12 col-md-9">
-            <input type="text" class="form-control" id="bank_holder_name" placeholder="{{ 'Enter Bank Holder Name' | translate }}" formControlName="bank_holder_name" (input)="onHolderNameInput($event)" (keypress)="onNameKeypress($event)" (paste)="onNamePaste($event)">
-            <div class="invalid-feedback" *ngIf="form?.controls?.['bank_holder_name']?.touched && form.controls['bank_holder_name']?.errors?.['required']">
+            <input type="text" class="form-control" id="bank_holder_name"
+                placeholder="{{ 'Enter Bank Holder Name' | translate }}" formControlName="bank_holder_name"
+                pattern="[a-zA-Z\s]*" (input)="onHolderNameInput($event)" (keypress)="onNameKeypress($event)"
+                (paste)="onNamePaste($event)">
+            <div class="invalid-feedback"
+                *ngIf="form?.controls?.['bank_holder_name']?.touched && form.controls['bank_holder_name']?.errors?.['required']">
                 {{ 'Holder Name is Required' | translate }}
             </div>
-            <div class="invalid-feedback" *ngIf="form?.controls?.['bank_holder_name']?.touched && form.controls['bank_holder_name']?.errors?.['invalidName']">
+            <div class="invalid-feedback"
+                *ngIf="form?.controls?.['bank_holder_name']?.touched && form.controls['bank_holder_name']?.errors?.['invalidName']">
                 {{ 'Only letters and spaces are allowed' | translate }}
             </div>
         </div>
@@ -43,13 +59,15 @@
     <div class="row mb-3 align-items-center">
         <label for="swift" class="form-label col-xxl-2 col-lg-12 col-md-3">{{ 'Swift'| translate}}</label>
         <div class="col-xxl-10 col-lg-12 col-md-9">
-            <input type="text" class="form-control" id="swift" placeholder="{{ 'Enter Swift' | translate }}" formControlName="swift">
+            <input type="text" class="form-control" id="swift" placeholder="{{ 'Enter Swift' | translate }}"
+                formControlName="swift">
         </div>
     </div>
     <div class="row mb-3 align-items-center">
         <label for="ifsc" class="form-label col-xxl-2 col-lg-12 col-md-3">{{ 'IFSC'| translate}}</label>
         <div class="col-xxl-10 col-lg-12 col-md-9">
-            <input type="text" class="form-control" id="ifsc" placeholder="{{ 'Enter IFSC' | translate }}" formControlName="ifsc">
+            <input type="text" class="form-control" id="ifsc" placeholder="{{ 'Enter IFSC' | translate }}"
+                formControlName="ifsc">
         </div>
     </div>
 </form>
@@ -63,10 +81,12 @@
     <div class="row mb-3 align-items-center">
         <label for="paypal_email" class="form-label col-xxl-2 col-lg-12 col-md-3">{{'Paypal Email'| translate}}</label>
         <div class="col-xxl-10 col-lg-12 col-md-9">
-            <input type="email" class="form-control" id="paypal_email" placeholder="{{ 'Enter Paypal Email' | translate }}" formControlName="paypal_email">
+            <input type="email" class="form-control" id="paypal_email"
+                placeholder="{{ 'Enter Paypal Email' | translate }}" formControlName="paypal_email">
         </div>
     </div>
     <div class="text-end">
-        <app-button [class]="'btn btn-animation theme-bg-color btn-md d-inline-block'" [id]="'payout_btn'">{{ 'Save'| translate}}</app-button>
+        <app-button [class]="'btn btn-animation theme-bg-color btn-md d-inline-block'" [id]="'payout_btn'">{{ 'Save'|
+            translate}}</app-button>
     </div>
 </form>

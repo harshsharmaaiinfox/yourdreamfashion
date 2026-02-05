@@ -14,7 +14,7 @@ import { PaymentDetails } from '../../../shared/interface/payment-details.interf
 export class BankDetailsComponent {
 
   @Select(PaymentDetailsState.paymentDetails) paymentDetails$: Observable<PaymentDetails>;
-  
+
   public form: FormGroup;
   public active = 'bank';
 
@@ -34,11 +34,11 @@ export class BankDetailsComponent {
     }
     const namePattern = /^[a-zA-Z]+(\s[a-zA-Z]+)*$/;
     const trimmedValue = control.value.trim();
-    
+
     if (trimmedValue.length < 2) {
       return { invalidName: true };
     }
-    
+
     return namePattern.test(control.value) ? null : { invalidName: true };
   }
 
@@ -48,10 +48,17 @@ export class BankDetailsComponent {
     const value = input.value;
     // Remove any non-numeric characters
     const numericValue = value.replace(/[^0-9]/g, '');
-    
+
     if (value !== numericValue) {
       input.value = numericValue;
       this.form.get('bank_account_no')?.setValue(numericValue, { emitEvent: false });
+    }
+
+    // Limit to 16 digits
+    if (numericValue.length > 16) {
+      const truncatedValue = numericValue.slice(0, 16);
+      input.value = truncatedValue;
+      this.form.get('bank_account_no')?.setValue(truncatedValue, { emitEvent: false });
     }
   }
 
@@ -61,9 +68,7 @@ export class BankDetailsComponent {
     const value = input.value;
     // Remove special characters and numbers, keep only letters and spaces
     const filteredValue = value.replace(/[^a-zA-Z\s]/g, '');
-    // Remove extra spaces and ensure proper formatting
-    const formattedValue = filteredValue.replace(/\s+/g, ' ').trim();
-    
+
     if (value !== filteredValue) {
       input.value = filteredValue;
       this.form.get('bank_name')?.setValue(filteredValue, { emitEvent: false });
@@ -76,9 +81,7 @@ export class BankDetailsComponent {
     const value = input.value;
     // Remove special characters and numbers, keep only letters and spaces
     const filteredValue = value.replace(/[^a-zA-Z\s]/g, '');
-    // Remove extra spaces and ensure proper formatting
-    const formattedValue = filteredValue.replace(/\s+/g, ' ').trim();
-    
+
     if (value !== filteredValue) {
       input.value = filteredValue;
       this.form.get('bank_holder_name')?.setValue(filteredValue, { emitEvent: false });
@@ -89,7 +92,7 @@ export class BankDetailsComponent {
   public onNameKeypress(event: KeyboardEvent): boolean {
     const char = String.fromCharCode(event.which);
     const pattern = /[a-zA-Z\s]/;
-    
+
     if (!pattern.test(char)) {
       event.preventDefault();
       return false;
@@ -101,7 +104,7 @@ export class BankDetailsComponent {
   public onBankAccountKeypress(event: KeyboardEvent): boolean {
     const char = String.fromCharCode(event.which);
     const pattern = /[0-9]/;
-    
+
     if (!pattern.test(char)) {
       event.preventDefault();
       return false;
@@ -115,7 +118,7 @@ export class BankDetailsComponent {
     const pastedText = event.clipboardData?.getData('text/plain') || '';
     const filteredText = pastedText.replace(/[^a-zA-Z\s]/g, '');
     const formattedText = filteredText.replace(/\s+/g, ' ').trim();
-    
+
     if (formattedText) {
       const input = event.target as HTMLInputElement;
       input.value = formattedText;
@@ -131,11 +134,12 @@ export class BankDetailsComponent {
     event.preventDefault();
     const pastedText = event.clipboardData?.getData('text/plain') || '';
     const numericText = pastedText.replace(/[^0-9]/g, '');
-    
-    if (numericText) {
+    const truncatedText = numericText.slice(0, 16);
+
+    if (truncatedText) {
       const input = event.target as HTMLInputElement;
-      input.value = numericText;
-      this.form.get('bank_account_no')?.setValue(numericText, { emitEvent: false });
+      input.value = truncatedText;
+      this.form.get('bank_account_no')?.setValue(truncatedText, { emitEvent: false });
     }
   }
 
@@ -157,16 +161,16 @@ export class BankDetailsComponent {
         bank_account_no: paymentDetails?.bank_account_no,
         bank_name: paymentDetails?.bank_name,
         bank_holder_name: paymentDetails?.bank_holder_name,
-        swift:paymentDetails?.swift,
+        swift: paymentDetails?.swift,
         ifsc: paymentDetails?.ifsc,
         paypal_email: paymentDetails?.paypal_email
       })
     });
   }
 
-  submit(){    
+  submit() {
     this.form.markAllAsTouched();
-    if(this.form.valid){
+    if (this.form.valid) {
       this.store.dispatch(new UpdatePaymentDetails(this.form.value))
     }
   }
