@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+Disallow: /wp-admin/
+Disallow: /cart/
+Disallow: /checkout/
+Disallow: /my-account/
+Disallow: /wishlist
+Disallow: /compare
+Disallow: /search
+Disallow: /order/checkout-success
+Disallow: /order/details
+
+Sitemap: https://yourdreamfashion.com/sitemap.xml
