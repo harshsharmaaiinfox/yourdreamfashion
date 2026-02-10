@@ -1,18 +1,31 @@
-
-<ul class="category-list custom-padding custom-height">
-    <li *ngFor="let price of prices">
-        <div class="form-check ps-0 m-0 category-list-box">
-            <input class="checkbox_animated" type="checkbox" 
-                id="price-filter{{price?.id}}"
-                [value]="price?.value"
-                [checked]="checked(price?.value!)"
-                (change)="applyFilter($event)">
-            <label class="form-check-label" for="price-filter{{price?.id}}">
-                <span class="name" *ngIf="price?.price else minMaxPrice">{{ price?.text }} {{ price?.price | currencySymbol }}</span>
-                <ng-template #minMaxPrice>
-                    <span class="name">{{ price?.minPrice | currencySymbol }} - {{ price?.maxPrice | currencySymbol }}</span>
-                </ng-template>
-            </label>
+<div class="range-slider">
+    <div class="price-input">
+        <label>Min</label>
+        <div class="field">
+            <input type="number" class="input-min" [value]="price.min"
+                (change)="inputChange($any($event.target).value, 'min')" (keyup.enter)="applyFilter()">
         </div>
-    </li>
-</ul>
+        <div class="separator">-</div>
+        <label>Max</label>
+        <div class="field">
+            <input type="number" class="input-max" [value]="price.max"
+                (change)="inputChange($any($event.target).value, 'max')" (keyup.enter)="applyFilter()">
+        </div>
+    </div>
+
+    <div class="slider">
+        <div class="progress" [style.left.%]="(price.min / maxPrice) * 100"
+            [style.right.%]="100 - (price.max / maxPrice) * 100">
+        </div>
+    </div>
+
+    <div class="range-input">
+        <input type="range" class="range-min" [min]="minPrice" [max]="maxPrice" [value]="price.min" step="10"
+            (input)="sliderChange($any($event.target).valueAsNumber, 'min')">
+        <input type="range" class="range-max" [min]="minPrice" [max]="maxPrice" [value]="price.max" step="10"
+            (input)="sliderChange($any($event.target).valueAsNumber, 'max')">
+    </div>
+    <div class="mt-4 mt-lg-5">
+        <button class="btn btn-solid-default btn-sm w-100" (click)="reset()">{{ 'reset' | translate }}</button>
+    </div>
+</div>

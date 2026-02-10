@@ -1,20 +1,21 @@
 <div class="shop-left-sidebar">
   <div class="back-button" (click)="closeCanvasMenu()">
-      <h3>
-        <a href="javascript:vois(0)" class="text-title">
-          <i class="ri-close-fill"></i>
-          <span>{{ 'back' | translate }}</span>
-        </a>
-      </h3>
+    <h3>
+      <a href="javascript:vois(0)" class="text-title">
+        <i class="ri-close-fill"></i>
+        <span>{{ 'back' | translate }}</span>
+      </a>
+    </h3>
   </div>
   <ng-content></ng-content>
   <div class="filter-category">
-      <app-collection-filter [filter]="filter"></app-collection-filter>
+    <app-collection-filter [filter]="filter"></app-collection-filter>
   </div>
-  <app-skeleton-collection-sidebar *ngIf="attributeService.skeletonLoader else content"></app-skeleton-collection-sidebar>
+  <app-skeleton-collection-sidebar
+    *ngIf="attributeService.skeletonLoader else content"></app-skeleton-collection-sidebar>
   <ng-template #content>
     <div class="accordion custome-accordion" ngbAccordion>
-      <div class="accordion-item" ngbAccordionItem [collapsed]="false" *ngIf="!hideFilter?.includes('category')" >
+      <div class="accordion-item" ngbAccordionItem [collapsed]="false" *ngIf="!hideFilter?.includes('category')">
         <h2 class="accordion-header" ngbAccordionHeader>
           <button class="accordion-button" type="button" ngbAccordionButton>
             <span>{{ 'categories' | translate }}</span>
@@ -22,7 +23,7 @@
         </h2>
         <div class="accordion-collapse collapse" ngbAccordionCollapse>
           <div class="accordion-body" ngbAccordionBody>
-              <app-collection-category-filter [filter]="filter"></app-collection-category-filter>
+            <app-collection-category-filter [filter]="filter"></app-collection-category-filter>
           </div>
         </div>
       </div>
@@ -38,10 +39,10 @@
           </div>
         </div>
       </div> -->
-      <!-- <ng-container *ngIf="!filter['store_slug'] && !hideFilter?.includes('attribute')">
+      <ng-container *ngIf="!filter['store_slug'] && !hideFilter?.includes('attribute')">
         <ng-container *ngFor="let attribute of (attribute$ | async)?.data">
           <div class="accordion-item" ngbAccordionItem [collapsed]="false"
-            *ngIf="attribute.style !== 'image'">
+            *ngIf="attribute.style !== 'image' && !['attribute1', 'color', 'waist', 'license', 'litre', 'weight'].includes(attribute?.slug!)">
             <h2 class="accordion-header" ngbAccordionHeader>
               <button class="accordion-button" ngbAccordionButton>
                 <span>{{ attribute.name }}</span>
@@ -55,7 +56,7 @@
             </div>
           </div>
         </ng-container>
-      </ng-container> -->
+      </ng-container>
       <div class="accordion-item" ngbAccordionItem [collapsed]="false" *ngIf="!hideFilter?.includes('price')">
         <h2 class="accordion-header" ngbAccordionHeader>
           <button class="accordion-button" ngbAccordionButton>
