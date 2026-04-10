@@ -674,6 +674,10 @@ export class CheckoutComponent {
       case 'gaonvashi_cashfree':
         this.checkout(value);
         break;
+      case 'gaonvashi_starpaisa':
+        this.form.controls['payment_method'].setValue('gaonvashi_cashfree');
+        this.checkout('gaonvashi_cashfree');
+        break;
       default:
         break;
     }
@@ -1239,6 +1243,9 @@ export class CheckoutComponent {
           if(this.payment_method === 'gaonvashi_cashfree') {
             this.initiateGaonvashiCashFreePaymentIntent(this.payment_method, uuid, result);
           }
+          if(this.payment_method === 'gaonvashi_starpaisa') {
+            this.initiateGaonvashiStarPaisaPaymentIntent(this.payment_method, uuid, result);
+          }
         },
         error: (err) => {
           console.log(err);
@@ -1357,6 +1364,53 @@ export class CheckoutComponent {
             }
           } catch (error) {
             console.error("Error parsing Gaonvashi CashFree response:", error);
+          }
+        } else {
+          console.error("Payment initiation failed:", response?.msg);
+        }
+      },
+      error: (err) => {
+        console.log("Error initiating payment:", err);
+      }
+    });
+  }
+
+  // Gaonvashi StarPaisa UPI Payment Integration
+  initiateGaonvashiStarPaisaPaymentIntent(payment_method: string, uuid: any, order_result: any) {
+    const userData = localStorage.getItem('account');
+    const parsedUserData = JSON.parse(userData || '{}')?.user || {};
+
+    const payload = {
+      uuid,
+      ...parsedUserData,
+      checkout: this.storeData?.order?.checkout
+    };
+
+    this.cartService.initiateGaonvashiStarPaisaPaymentIntent({
+      uuid: payload.uuid,
+      email: payload.email,
+      total: this.storeData?.order?.checkout?.total?.total,
+      phone: parsedUserData.phone,
+      name: parsedUserData.name,
+      address: `${parsedUserData.address?.[0]?.city || ''} ${parsedUserData.address?.[0]?.area || ''}`
+    }).subscribe({
+      next: (response) => {
+        if (response?.R && response?.data) {
+          try {
+            const starPaisaData = response.data;
+
+            if (starPaisaData?.payment_url) {
+              sessionStorage.setItem('payment_uuid', uuid);
+              sessionStorage.setItem('payment_method', payment_method);
+              sessionStorage.setItem('payment_action', JSON.stringify(this.form.value));
+              localStorage.setItem('order_id', JSON.stringify(order_result.order_number));
+
+              window.location.href = starPaisaData.payment_url;
+            } else {
+              console.error("Invalid response: Payment link is missing.");
+            }
+          } catch (error) {
+            console.error("Error parsing Gaonvashi StarPaisa response:", error);
           }
         } else {
           console.error("Payment initiation failed:", response?.msg);
