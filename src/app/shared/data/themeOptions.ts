@@ -2,8 +2,8 @@ export const themeOptionsYourDreamFashion = {
     "id": 1,
     "options": {
         "general": {
-            "site_title": "Your Dream Fashion | Fashion that Fits Your Dreams",
-            "site_tagline": "Timeless Fashion, Dreamy Details",
+            "site_title": "Your Dream Fashion",
+            "site_tagline": "Trendy Men’s & Women’s Clothing Online",
             "sticky_cart_enable": true,
             "cart_style": "cart_sidebar",
             "back_to_top_enable": false,
@@ -309,11 +309,11 @@ export const themeOptionsYourDreamFashion = {
             }
         },
         "seo": {
-            "meta_tags": null,
-            "meta_title": null,
-            "meta_description": null,
-            "og_title": null,
-            "og_description": null,
+            "meta_tags": "trendy clothing online, men’s clothing online, women’s clothing online, fashion clothing India, affordable fashion online, online fashion store India, stylish outfits for men, trendy outfits for women, casual wear for men, casual wear for women, formal wear for men and women, latest fashion trends India, budget-friendly fashion clothing, online apparel store India, buy trendy clothes online, shop men’s and women’s fashion, Your Dream Fashion, yourdreamfashion online store",
+            "meta_title": "Trendy Men’s & Women’s Clothing Online | Your Dream Fashion",
+            "meta_description": "Shop stylish men’s and women’s clothing at Your Dream Fashion. Discover trendy outfits, casual & formal wear at affordable prices.",
+            "og_title": "Trendy Men’s & Women’s Clothing Online | Your Dream Fashion",
+            "og_description": "Shop stylish men’s and women’s clothing at Your Dream Fashion. Discover trendy outfits, casual & formal wear at affordable prices.",
             "og_image_id": null,
             "og_image": null
         }
