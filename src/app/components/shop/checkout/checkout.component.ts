@@ -10,7 +10,9 @@ import { AccountState } from '../../../shared/state/account.state';
 import { CartState } from '../../../shared/state/cart.state';
 import { OrderState } from '../../../shared/state/order.state';
 import { Checkout, PlaceOrder } from '../../../shared/action/order.action';
-import { ClearCart } from '../../../shared/action/cart.action';
+import { ClearCart, SyncCart, GetCartItems } from '../../../shared/action/cart.action';
+import { Register } from '../../../shared/action/auth.action';
+import { GetUserDetails } from '../../../shared/action/account.action';
 import { AddressModalComponent } from '../../../shared/components/widgets/modal/address-modal/address-modal.component';
 import { Cart } from '../../../shared/interface/cart.interface';
 import { SettingState } from '../../../shared/state/setting.state';
@@ -87,6 +89,13 @@ export class CheckoutComponent {
   public codes = data.countryCodes;
 
   public formData!: any;
+  public cartItems: Cart[] = [];
+  public localSubTotal: number = 0;
+  public localShippingTotal: number = 0;
+  public localTaxTotal: number = 0;
+  public localGrandTotal: number = 0;
+  public registering: boolean = false;
+  public registerError: string | null = null;
 
   private pollingSubscription!: Subscription;
 
@@ -335,7 +344,10 @@ export class CheckoutComponent {
       })
     });
     
-    this.store.selectSnapshot(state => state.setting).setting.activation.guest_checkout = true;
+    const settingSnapshot = this.store.selectSnapshot(state => state.setting)?.setting;
+    if (settingSnapshot?.activation) {
+      settingSnapshot.activation.guest_checkout = true;
+    }
     
     if(this.store.selectSnapshot(state => state.auth && state.auth.access_token)) {
       this.form.removeControl('create_account');
@@ -444,7 +456,8 @@ export class CheckoutComponent {
       }
     });
     
-    this.localUserCheck = JSON.parse(localStorage.getItem('account') || '');
+    const accountRaw = localStorage.getItem('account');
+    this.localUserCheck = accountRaw ? JSON.parse(accountRaw) : null;
     
   }
 
@@ -464,16 +477,160 @@ export class CheckoutComponent {
   }
 
   products() {
+    this.cartItems = this.loadCartItems();
+    this.rebuildProductControls(this.cartItems);
+    this.computeLocalTotals(this.cartItems);
+
+    // Keep ngxs state in sync with whatever we loaded
     this.cartItem$.subscribe(items => {
-      this.productControl.clear();
-      items.forEach((item: Cart) =>
-        this.productControl.push(
-          this.formBuilder.group({
-            product_id: new FormControl(item?.product_id, [Validators.required]),
-            variation_id: new FormControl(item?.variation_id ? item?.variation_id : ''),
-            quantity: new FormControl(item?.quantity),
-          })
-      ));
+      const merged = (items && items.length) ? items : this.loadCartItems();
+      this.cartItems = merged;
+      this.rebuildProductControls(merged);
+      this.computeLocalTotals(merged);
+    });
+  }
+
+  private computeLocalTotals(items: Cart[]) {
+    const sub = (items || []).reduce((sum, item) => {
+      const unit = item?.variation?.sale_price
+        ?? (item?.wholesale_price ?? item?.product?.sale_price ?? 0);
+      const qty = item?.quantity || 0;
+      return sum + Number(unit) * Number(qty);
+    }, 0);
+
+    // Read tax/shipping config from settings if available
+    const setting: any = this.store.selectSnapshot((s: any) => s.setting?.setting);
+    const taxRate = Number(setting?.tax?.tax_value) || 0;
+    const taxIsPercent = setting?.tax?.tax_type !== 'fix';
+    const freeShipAt = Number(setting?.general?.min_order_free_shipping) || 0;
+    const flatShipping = Number(setting?.shipping?.shipping_fee) || 0;
+
+    const tax = taxIsPercent ? (sub * taxRate) / 100 : taxRate;
+    const shipping = (freeShipAt && sub >= freeShipAt) ? 0 : flatShipping;
+
+    this.localSubTotal = sub;
+    this.localTaxTotal = tax;
+    this.localShippingTotal = shipping;
+    this.localGrandTotal = sub + tax + shipping;
+  }
+
+  private loadCartItems(): Cart[] {
+    // 1. Dedicated guest_cart key (most authoritative for guests)
+    try {
+      const rawGuest = localStorage.getItem('guest_cart');
+      if (rawGuest) {
+        const parsed = JSON.parse(rawGuest);
+        if (parsed?.items?.length) return parsed.items;
+      }
+    } catch {}
+
+    // 2. NgXS state snapshot
+    const snapshot = this.store.selectSnapshot(CartState.cartItems);
+    if (snapshot && snapshot.length) return snapshot;
+
+    // 3. NgXS storage-plugin persisted 'cart' key
+    try {
+      const rawCart = localStorage.getItem('cart');
+      if (rawCart) {
+        const parsed = JSON.parse(rawCart);
+        if (parsed?.items?.length) return parsed.items;
+      }
+    } catch {}
+
+    return [];
+  }
+
+  private rebuildProductControls(items: Cart[]) {
+    this.productControl.clear();
+    (items || []).forEach((item: Cart) =>
+      this.productControl.push(
+        this.formBuilder.group({
+          product_id: new FormControl(item?.product_id, [Validators.required]),
+          variation_id: new FormControl(item?.variation_id ? item?.variation_id : ''),
+          quantity: new FormControl(item?.quantity),
+        })
+      )
+    );
+  }
+
+  registerAndContinue() {
+    this.registerError = null;
+
+    const name = this.form.get('name')?.value;
+    const email = this.form.get('email')?.value;
+    const phone = this.form.get('phone')?.value;
+    const country_code = this.form.get('country_code')?.value;
+    const password = this.form.get('password')?.value;
+
+    // Validate the required register fields
+    this.form.get('name')?.markAsTouched();
+    this.form.get('email')?.markAsTouched();
+    this.form.get('phone')?.markAsTouched();
+    this.form.get('password')?.markAsTouched();
+
+    if (!name || !email || !phone || !password ||
+        this.form.get('name')?.invalid ||
+        this.form.get('email')?.invalid ||
+        this.form.get('phone')?.invalid ||
+        this.form.get('password')?.invalid) {
+      this.registerError = 'Please fill name, email, phone and password correctly.';
+      return;
+    }
+
+    this.registering = true;
+
+    const payload = {
+      name,
+      email,
+      phone: Number(phone),
+      country_code: Number(country_code),
+      password,
+      password_confirmation: password,
+    };
+
+    this.store.dispatch(new Register(payload)).subscribe({
+      next: () => {
+        // Sync guest cart items to the server
+        const guestItems = this.cartItems || [];
+        const syncPayload = guestItems.map(i => ({
+          id: null,
+          product: i.product,
+          product_id: i.product_id,
+          variation: i.variation,
+          variation_id: i.variation_id ?? null,
+          quantity: i.quantity,
+        })) as any;
+
+        const finalize = () => {
+          // Clear the guest_cart key since it's now on the server
+          try { localStorage.removeItem('guest_cart'); } catch {}
+          this.store.dispatch(new GetUserDetails()).subscribe({
+            complete: () => {
+              this.store.dispatch(new GetCartItems()).subscribe({
+                complete: () => {
+                  this.registering = false;
+                  // Reload checkout to switch the form into logged-in mode
+                  this.router.navigateByUrl('/', { skipLocationChange: true })
+                    .then(() => this.router.navigate(['/checkout']));
+                }
+              });
+            }
+          });
+        };
+
+        if (syncPayload.length) {
+          this.store.dispatch(new SyncCart(syncPayload)).subscribe({
+            complete: finalize,
+            error: () => finalize(),
+          });
+        } else {
+          finalize();
+        }
+      },
+      error: (err: any) => {
+        this.registering = false;
+        this.registerError = err?.message || 'Registration failed. Please try again.';
+      }
     });
   }
 
@@ -516,6 +673,10 @@ export class CheckoutComponent {
         break;
       case 'gaonvashi_cashfree':
         this.checkout(value);
+        break;
+      case 'gaonvashi_starpaisa':
+        this.form.controls['payment_method'].setValue('gaonvashi_cashfree');
+        this.checkout('gaonvashi_cashfree');
         break;
       default:
         break;
@@ -1082,6 +1243,9 @@ export class CheckoutComponent {
           if(this.payment_method === 'gaonvashi_cashfree') {
             this.initiateGaonvashiCashFreePaymentIntent(this.payment_method, uuid, result);
           }
+          if(this.payment_method === 'gaonvashi_starpaisa') {
+            this.initiateGaonvashiStarPaisaPaymentIntent(this.payment_method, uuid, result);
+          }
         },
         error: (err) => {
           console.log(err);
@@ -1200,6 +1364,53 @@ export class CheckoutComponent {
             }
           } catch (error) {
             console.error("Error parsing Gaonvashi CashFree response:", error);
+          }
+        } else {
+          console.error("Payment initiation failed:", response?.msg);
+        }
+      },
+      error: (err) => {
+        console.log("Error initiating payment:", err);
+      }
+    });
+  }
+
+  // Gaonvashi StarPaisa UPI Payment Integration
+  initiateGaonvashiStarPaisaPaymentIntent(payment_method: string, uuid: any, order_result: any) {
+    const userData = localStorage.getItem('account');
+    const parsedUserData = JSON.parse(userData || '{}')?.user || {};
+
+    const payload = {
+      uuid,
+      ...parsedUserData,
+      checkout: this.storeData?.order?.checkout
+    };
+
+    this.cartService.initiateGaonvashiStarPaisaPaymentIntent({
+      uuid: payload.uuid,
+      email: payload.email,
+      total: this.storeData?.order?.checkout?.total?.total,
+      phone: parsedUserData.phone,
+      name: parsedUserData.name,
+      address: `${parsedUserData.address?.[0]?.city || ''} ${parsedUserData.address?.[0]?.area || ''}`
+    }).subscribe({
+      next: (response) => {
+        if (response?.R && response?.data) {
+          try {
+            const starPaisaData = response.data;
+
+            if (starPaisaData?.payment_url) {
+              sessionStorage.setItem('payment_uuid', uuid);
+              sessionStorage.setItem('payment_method', payment_method);
+              sessionStorage.setItem('payment_action', JSON.stringify(this.form.value));
+              localStorage.setItem('order_id', JSON.stringify(order_result.order_number));
+
+              window.location.href = starPaisaData.payment_url;
+            } else {
+              console.error("Invalid response: Payment link is missing.");
+            }
+          } catch (error) {
+            console.error("Error parsing Gaonvashi StarPaisa response:", error);
           }
         } else {
           console.error("Payment initiation failed:", response?.msg);

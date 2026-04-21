@@ -75,13 +75,7 @@
                                         {{ 'Phone Number must be 10 digits' | translate }}
                                     </div>
                                 </div>
-                                <div class="col-md-12">
-                                    <div class="mb-3 form-box form-checkbox">
-                                        <input type="checkbox" class="form-check-input checkbox_animated" id="account" formControlName="create_account">
-                                        <label class="form-check-label" for="account">{{ 'Create an Account?' | translate }}</label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6" *ngIf="form.controls['create_account'].value">
+                                <div class="col-md-6">
                                     <div class="mb-3 form-box">
                                         <label for="pass" class="form-label">{{ 'Password' | translate }}</label>
                                         <input type="password" class="form-control" formControlName="password" placeholder="{{ 'Enter Password' | translate }}" id="pass">
@@ -94,6 +88,20 @@
                                             {{ 'Password must be at least 8 characters long' | translate }}
                                         </div>
                                     </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="d-flex align-items-center gap-3 mt-2 flex-wrap">
+                                        <button type="button" class="btn theme-bg-color text-white fw-bold"
+                                            [disabled]="registering"
+                                            (click)="registerAndContinue()">
+                                            {{ (registering ? 'Registering...' : 'Register') | translate }}
+                                        </button>
+                                        <span class="text-content">
+                                            {{ 'Already have an account?' | translate }}
+                                            <a [routerLink]="['/auth/login']" [queryParams]="{ redirect: '/checkout' }" class="theme-color fw-bold">{{ 'Login' | translate }}</a>
+                                        </span>
+                                    </div>
+                                    <div class="text-danger mt-2" *ngIf="registerError">{{ registerError }}</div>
                                 </div>
                             </form>
                         </div>
@@ -426,10 +434,10 @@
                                 [class]="'empty-cart'"
                                 [image]="'assets/svg/empty-items.svg'"
                                 [text]="'No Items Cart'"
-                                *ngIf="!(cartItem$ | async)?.length">
+                                *ngIf="!cartItems?.length">
                             </app-no-data>
-                            <ul class="cart-listing" *ngIf="(cartItem$ | async)?.length">
-                                <li *ngFor="let item of cartItem$ | async">
+                            <ul class="cart-listing" *ngIf="cartItems?.length">
+                                <li *ngFor="let item of cartItems">
                                     <img [src]="item?.variation && item?.variation?.variation_image
                                                 ? item?.variation?.variation_image?.original_url
                                                 : item?.product?.product_thumbnail
@@ -449,26 +457,26 @@
                         </div>
                        </div>
                       <div class="col-lg-5">
-                        <ng-container *ngIf="(cartItem$ | async)?.length">
+                        <ng-container *ngIf="cartItems?.length">
                             <form [formGroup]="form" (ngSubmit)="placeorder()">
                                 <div class="custom-box-loader">
                                     <ul class="summary-total">
                                         <li>
                                             <h4>{{ 'Subtotal' | translate }}</h4>
                                             <h4 class="price">
-                                                {{ (checkoutTotal ? (checkoutTotal.total.sub_total | currencySymbol) : 'Not Calculated Yet' | translate ) }}
+                                                {{ (checkoutTotal ? checkoutTotal.total.sub_total : localSubTotal) | currencySymbol }}
                                             </h4>
                                         </li>
                                         <li *ngIf="!(cartDigital$ | async)">
                                             <h4>{{ 'Shipping' | translate }}</h4>
                                             <h4 class="price">
-                                                {{ (checkoutTotal ? (checkoutTotal.total.shipping_total | currencySymbol) : 'Not Calculated Yet' | translate) }}
+                                                {{ (checkoutTotal ? checkoutTotal.total.shipping_total : localShippingTotal) | currencySymbol }}
                                             </h4>
                                         </li>
                                         <li>
                                             <h4>{{ 'Tax' | translate  }}</h4>
                                             <h4 class="price">
-                                                {{ (checkoutTotal ? (checkoutTotal.total.tax_total | currencySymbol) : 'Not Calculated Yet' | translate ) }}
+                                                {{ (checkoutTotal ? checkoutTotal.total.tax_total : localTaxTotal) | currencySymbol }}
                                             </h4>
                                         </li>
                                         <li *ngIf="(user$ | async) && checkoutTotal && (user$ | async)?.point?.balance">
@@ -532,7 +540,7 @@
                                         <li class="list-total">
                                             <h4>{{ 'Total' | translate }}</h4>
                                             <h4 class="price">
-                                                {{ (checkoutTotal ? (checkoutTotal.total.total | currencySymbol) : 'Not Calculated Yet' | translate ) }}
+                                                {{ (checkoutTotal ? checkoutTotal.total.total : localGrandTotal) | currencySymbol }}
                                             </h4>
                                         </li>
                                     </ul>

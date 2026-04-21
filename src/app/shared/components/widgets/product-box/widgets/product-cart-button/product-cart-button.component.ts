@@ -45,6 +45,39 @@ export class ProductCartButtonComponent {
       quantity: qty
     }
     this.store.dispatch(new AddToCart(params));
+    this.writeGuestCart(product, qty);
+  }
+
+  private writeGuestCart(product: Product, qty: number) {
+    const token = (this.store.selectSnapshot((s: any) => s.auth?.access_token)) || '';
+    const user = this.store.selectSnapshot((s: any) => s.account?.user);
+    if (token && user) return; // logged in — server cart handles it
+    try {
+      const raw = localStorage.getItem('guest_cart');
+      const parsed = raw ? JSON.parse(raw) : { items: [], total: 0, is_digital_only: false };
+      const items: any[] = parsed.items || [];
+      const idx = items.findIndex(i => i.product_id === product.id && !i.variation_id);
+      if (idx >= 0) {
+        items[idx].quantity = Math.max(0, (items[idx].quantity || 0) + qty);
+        items[idx].sub_total = items[idx].quantity * (product.sale_price || 0);
+        if (items[idx].quantity <= 0) items.splice(idx, 1);
+      } else if (qty > 0) {
+        items.push({
+          id: Number(Math.floor(Math.random() * 100000)),
+          quantity: qty,
+          sub_total: qty * (product.sale_price || 0),
+          product: product,
+          product_id: product.id,
+          wholesale_price: null,
+          variation: null,
+          variation_id: null,
+        });
+      }
+      const total = items.reduce((p, c) => p + Number(c.sub_total || 0), 0);
+      localStorage.setItem('guest_cart', JSON.stringify({
+        items, total, is_digital_only: false
+      }));
+    } catch {}
   }
 
   externalProductLink(link: string) {

@@ -100,7 +100,7 @@ export const themeOptionsYourDreamFashion = {
             "copyright_content": "Copyright 2025 © Your Dream Fashion ",
             "footer_about": null,
             "about_address": "Unit No. 976, Gaur City Mall, 9th Floor, Plot No. C-01B/GH-01, Noida West, G.B. NAGAR, Uttar Pradesh 201306",
-            "about_email": "gaonvashisoftech@gmail.com",
+            "about_email": "info@yourdreamfashion.com",
             "footer_categories": [],
             "useful_link": [
                 {
@@ -132,7 +132,7 @@ export const themeOptionsYourDreamFashion = {
                 }
             ],
             "support_number": "+91 6396005037",
-            "support_email": "gaonvashisoftech@gmail.com",
+            "support_email": "info@yourdreamfashion.com",
             "play_store_url": null,
             "app_store_url": null,
             "social_media_enable": true,
