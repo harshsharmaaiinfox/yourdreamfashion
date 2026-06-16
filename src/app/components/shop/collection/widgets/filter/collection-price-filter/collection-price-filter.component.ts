@@ -54,13 +54,19 @@ export class CollectionPriceFilterComponent {
 
   // Handle manual input changes
   inputChange(value: number, type: 'min' | 'max') {
+    value = Number(value);
+    if (isNaN(value)) return;
+
     if (type === 'min') {
       if (value < this.minPrice) value = this.minPrice;
+      if (value > this.price.max) value = this.price.max; // don't let min exceed max
       this.price.min = value;
     } else {
       if (value > this.maxPrice) value = this.maxPrice;
+      if (value < this.price.min) value = this.price.min; // don't let max go below min
       this.price.max = value;
     }
+    this.applyFilter(); // commit on blur, not only on Enter
   }
 
   applyFilter() {
